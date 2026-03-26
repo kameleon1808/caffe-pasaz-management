@@ -6,8 +6,10 @@ out/
 dist/
 
 # Baza podataka / Database
-prisma/*.db
-prisma/*.db-journal
+prisma/**/*.db
+prisma/**/*.db-journal
+*.db
+*.db-journal
 
 # Okruženje / Environment
 .env
