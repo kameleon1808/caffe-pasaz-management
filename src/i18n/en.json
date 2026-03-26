@@ -1,0 +1,104 @@
+{
+  "login": {
+    "title": "Login",
+    "subtitle": "Kafić Pasaz — Management System",
+    "username": "Username",
+    "password": "Password",
+    "username_placeholder": "Enter your username",
+    "password_placeholder": "Enter your password",
+    "submit": "Log In",
+    "submitting": "Logging in...",
+    "error_invalid": "Invalid username or password",
+    "error_inactive": "Account is deactivated. Contact your administrator.",
+    "error_network": "Network error. Please check your connection.",
+    "error_server": "Server error. Please try again.",
+    "error_required_username": "Username is required",
+    "error_required_password": "Password is required"
+  },
+
+  "nav": {
+    "dashboard": "Dashboard",
+    "tables": "Tables",
+    "bills": "Bills",
+    "products": "Products",
+    "categories": "Categories",
+    "users": "Users",
+    "shifts": "Shifts",
+    "reports": "Reports",
+    "inventory": "Inventory",
+    "settings": "Settings",
+    "logout": "Logout"
+  },
+
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "back": "Back",
+    "close": "Close",
+    "search": "Search",
+    "filter": "Filter",
+    "refresh": "Refresh",
+    "add": "Add",
+    "create": "Create",
+    "yes": "Yes",
+    "no": "No",
+    "status_active": "Active",
+    "status_inactive": "Inactive",
+    "unknown_error": "An unknown error has occurred",
+    "no_data": "No data to display"
+  },
+
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome, {{name}}!",
+    "role_admin": "Administrator",
+    "role_waiter": "Waiter",
+    "no_active_shift": "No active shift",
+    "start_shift": "Start Shift",
+    "end_shift": "End Shift",
+    "quick_stats": "Quick Overview",
+    "today_revenue": "Today's Revenue",
+    "open_bills": "Open Bills",
+    "occupied_tables": "Occupied Tables",
+    "shift_desc_admin": "As an administrator you can start or review shifts.",
+    "shift_desc_waiter": "Please start a shift before you can process payments.",
+    "admin_users_title": "User Management",
+    "admin_users_desc": "Add, edit or deactivate a waiter",
+    "admin_reports_title": "Reports",
+    "admin_reports_desc": "Daily, weekly and monthly reports",
+    "admin_settings_title": "Settings",
+    "admin_settings_desc": "System settings for the cafe"
+  },
+
+  "roles": {
+    "ADMIN": "Administrator",
+    "WAITER": "Waiter"
+  },
+
+  "zones": {
+    "INDOOR": "Indoor",
+    "OUTDOOR": "Outdoor (Terrace)"
+  },
+
+  "errors": {
+    "not_found": "Page Not Found",
+    "not_found_desc": "The page you are looking for does not exist.",
+    "unauthorized": "Access Denied",
+    "unauthorized_desc": "You do not have permission to access this page.",
+    "forbidden": "Forbidden",
+    "forbidden_desc": "Only administrators can access this page.",
+    "go_home": "Go to Home"
+  },
+
+  "header": {
+    "language": "Language",
+    "profile": "Profile",
+    "logout": "Logout"
+  }
+}

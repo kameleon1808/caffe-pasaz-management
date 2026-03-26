@@ -1,0 +1,104 @@
+{
+  "login": {
+    "title": "Prijava",
+    "subtitle": "Kafić Pasaz — Sistem za upravljanje",
+    "username": "Korisničko ime",
+    "password": "Lozinka",
+    "username_placeholder": "Unesite korisničko ime",
+    "password_placeholder": "Unesite lozinku",
+    "submit": "Prijavite se",
+    "submitting": "Prijavljivanje...",
+    "error_invalid": "Pogrešno korisničko ime ili lozinka",
+    "error_inactive": "Nalog je deaktiviran. Kontaktirajte administratora.",
+    "error_network": "Greška mreže. Proverite konekciju.",
+    "error_server": "Greška servera. Pokušajte ponovo.",
+    "error_required_username": "Korisničko ime je obavezno",
+    "error_required_password": "Lozinka je obavezna"
+  },
+
+  "nav": {
+    "dashboard": "Kontrolna tabla",
+    "tables": "Stolovi",
+    "bills": "Računi",
+    "products": "Proizvodi",
+    "categories": "Kategorije",
+    "users": "Korisnici",
+    "shifts": "Smene",
+    "reports": "Izveštaji",
+    "inventory": "Inventar",
+    "settings": "Podešavanja",
+    "logout": "Odjava"
+  },
+
+  "common": {
+    "loading": "Učitavanje...",
+    "error": "Greška",
+    "success": "Uspeh",
+    "cancel": "Otkaži",
+    "save": "Sačuvaj",
+    "edit": "Izmeni",
+    "delete": "Obriši",
+    "confirm": "Potvrdi",
+    "back": "Nazad",
+    "close": "Zatvori",
+    "search": "Pretraži",
+    "filter": "Filter",
+    "refresh": "Osveži",
+    "add": "Dodaj",
+    "create": "Kreiraj",
+    "yes": "Da",
+    "no": "Ne",
+    "status_active": "Aktivan",
+    "status_inactive": "Neaktivan",
+    "unknown_error": "Došlo je do nepoznate greške",
+    "no_data": "Nema podataka za prikaz"
+  },
+
+  "dashboard": {
+    "title": "Kontrolna tabla",
+    "welcome": "Dobrodošli, {{name}}!",
+    "role_admin": "Administrator",
+    "role_waiter": "Konobar",
+    "no_active_shift": "Nema aktivne smene",
+    "start_shift": "Počni smenu",
+    "end_shift": "Završi smenu",
+    "quick_stats": "Brzi pregled",
+    "today_revenue": "Prihod danas",
+    "open_bills": "Otvoreni računi",
+    "occupied_tables": "Zauzetih stolova",
+    "shift_desc_admin": "Kao administrator možete početi ili pregledati smene.",
+    "shift_desc_waiter": "Molimo počnite smenu da biste mogli da naplaćujete.",
+    "admin_users_title": "Upravljanje korisnicima",
+    "admin_users_desc": "Dodaj, izmeni ili deaktiviraj konobara",
+    "admin_reports_title": "Izveštaji",
+    "admin_reports_desc": "Dnevni, nedeljni i mesečni izveštaji",
+    "admin_settings_title": "Podešavanja",
+    "admin_settings_desc": "Sistemska podešavanja kafića"
+  },
+
+  "roles": {
+    "ADMIN": "Administrator",
+    "WAITER": "Konobar"
+  },
+
+  "zones": {
+    "INDOOR": "Unutra",
+    "OUTDOOR": "Napolju (terasa)"
+  },
+
+  "errors": {
+    "not_found": "Stranica nije pronađena",
+    "not_found_desc": "Stranica koju tražite ne postoji.",
+    "unauthorized": "Pristup odbijen",
+    "unauthorized_desc": "Nemate dozvolu za pristup ovoj stranici.",
+    "forbidden": "Zabranjen pristup",
+    "forbidden_desc": "Samo administratori mogu pristupiti ovoj stranici.",
+    "go_home": "Na početnu"
+  },
+
+  "header": {
+    "language": "Jezik",
+    "profile": "Profil",
+    "logout": "Odjava"
+  }
+}
