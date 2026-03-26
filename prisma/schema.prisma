@@ -1,0 +1,181 @@
+// ==============================================================================
+// Prisma šema baze podataka za Kafić Pasaz Management sistem
+// Prisma database schema for the Kafić Pasaz Management system
+//
+// NAPOMENA: SQLite ne podržava native enum tipove u Prisma.
+// Enum-like polja su definisana kao String i validiraju se na aplikacionom nivou.
+//
+// NOTE: SQLite does not support native enum types in Prisma.
+// Enum-like fields are defined as String and validated at the application level.
+// ==============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ==============================================================================
+// MODELI / MODELS
+// ==============================================================================
+
+// Dozvoljene vrednosti polja tipa String koji se ponašaju kao enum:
+// Allowed values for String fields that behave as enums:
+//
+// Role:          "ADMIN" | "WAITER"
+// Zone:          "INDOOR" | "OUTDOOR"
+// BillStatus:    "OPEN" | "PAID" | "CANCELLED"
+// Color:         "WHITE" | "BLACK"
+// InventoryType: "PURCHASE" | "SALE" | "ADJUSTMENT" | "WASTE"
+
+/// Korisnik sistema (admin ili konobar)
+/// System user (admin or waiter)
+model User {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  password     String   // bcrypt hash
+  fullName     String
+  role         String   // "ADMIN" | "WAITER"
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  shifts       Shift[]
+  bills        Bill[]
+  salaries     Salary[] @relation("UserSalaries")
+  paidSalaries Salary[] @relation("PaidSalaries")
+}
+
+/// Isplata plate konobaru
+/// Salary payment to a waiter
+model Salary {
+  id       Int      @id @default(autoincrement())
+  userId   Int
+  amount   Float
+  paidById Int
+  note     String?
+  paidAt   DateTime @default(now())
+
+  user   User @relation("UserSalaries", fields: [userId], references: [id])
+  paidBy User @relation("PaidSalaries", fields: [paidById], references: [id])
+}
+
+/// Radna smena konobara
+/// Waiter work shift
+model Shift {
+  id           Int       @id @default(autoincrement())
+  userId       Int
+  startedAt    DateTime  @default(now())
+  endedAt      DateTime?
+  totalWhite   Float     @default(0)
+  totalBlack   Float     @default(0)
+  totalRevenue Float     @default(0)
+
+  user          User           @relation(fields: [userId], references: [id])
+  bills         Bill[]
+  inventoryLogs InventoryLog[]
+}
+
+/// Fizički sto u kafeu
+/// Physical table in the cafe
+model TableUnit {
+  id         Int     @id @default(autoincrement())
+  label      String
+  zone       String  // "INDOOR" | "OUTDOOR"
+  positionX  Float   @default(0)
+  positionY  Float   @default(0)
+  isOccupied Boolean @default(false)
+  active     Boolean @default(true)
+
+  bills Bill[]
+}
+
+/// Kategorija proizvoda (kafa, pivo, sokovi...)
+/// Product category (coffee, beer, juice...)
+model Category {
+  id        Int       @id @default(autoincrement())
+  nameSr    String
+  nameEn    String
+  sortOrder Int       @default(0)
+  active    Boolean   @default(true)
+
+  products Product[]
+}
+
+/// Proizvod koji se prodaje u kafeu
+/// Product sold in the cafe
+model Product {
+  id            Int     @id @default(autoincrement())
+  categoryId    Int
+  nameSr        String
+  nameEn        String
+  price         Float
+  stockQuantity Float   @default(0)
+  unit          String  @default("kom") // "kom" | "lit" | "dcl"
+  active        Boolean @default(true)
+
+  category      Category       @relation(fields: [categoryId], references: [id])
+  billItems     BillItem[]
+  inventoryLogs InventoryLog[]
+}
+
+/// Račun za jedan sto
+/// Bill for one table
+model Bill {
+  id              Int      @id @default(autoincrement())
+  tableId         Int
+  shiftId         Int
+  userId          Int
+  status          String   @default("OPEN") // "OPEN" | "PAID" | "CANCELLED"
+  discountPercent Float    @default(0)
+  total           Float    @default(0)
+  whiteTotal      Float    @default(0)
+  blackTotal      Float    @default(0)
+  createdAt       DateTime @default(now())
+  paidAt          DateTime?
+
+  tableUnit TableUnit  @relation(fields: [tableId], references: [id])
+  shift     Shift      @relation(fields: [shiftId], references: [id])
+  user      User       @relation(fields: [userId], references: [id])
+  items     BillItem[]
+}
+
+/// Stavka na računu (jedan proizvod)
+/// Line item on a bill (one product)
+model BillItem {
+  id        Int     @id @default(autoincrement())
+  billId    Int
+  productId Int
+  quantity  Int     @default(1)
+  unitPrice Float
+  color     String  @default("WHITE") // "WHITE" | "BLACK"
+  discount  Float   @default(0)
+
+  bill    Bill    @relation(fields: [billId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+}
+
+/// Log svakog ulaza ili izlaza iz inventara
+/// Log of every inventory change
+model InventoryLog {
+  id        Int      @id @default(autoincrement())
+  productId Int
+  changeQty Float
+  type      String   // "PURCHASE" | "SALE" | "ADJUSTMENT" | "WASTE"
+  shiftId   Int?
+  note      String?
+  createdAt DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id])
+  shift   Shift?  @relation(fields: [shiftId], references: [id])
+}
+
+/// Sistemska podešavanja u formatu ključ-vrednost
+/// System settings in key-value format
+model Setting {
+  key   String @id
+  value String
+}
