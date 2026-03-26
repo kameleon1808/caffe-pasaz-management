@@ -17,15 +17,23 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 
 // Kontekst / Context
-import { AuthProvider } from './context/AuthContext'
+import { AuthProvider }  from './context/AuthContext'
+import { ToastProvider } from './context/ToastContext'
 
 // Komponente / Components
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { MainLayout }     from './components/Layout/MainLayout'
+import { Toaster }        from './components/ui/Toaster'
 
 // Stranice / Pages
 import { LoginPage }     from './pages/LoginPage'
 import { DashboardPage } from './pages/DashboardPage'
+
+// Admin stranice — Faza 2 / Admin pages — Phase 2
+import { CategoriesPage } from './pages/admin/CategoriesPage'
+import { ProductsPage }   from './pages/admin/ProductsPage'
+import { InventoryPage }  from './pages/admin/InventoryPage'
+import { PurchasePage }   from './pages/admin/PurchasePage'
 
 // Placeholder stranice za buduće faze / Placeholder pages for future phases
 import { PlaceholderPage } from './pages/PlaceholderPage'
@@ -39,7 +47,9 @@ import { PlaceholderPage } from './pages/PlaceholderPage'
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
+      <ToastProvider>
+        <Toaster />
+        <AuthProvider>
         <Routes>
           {/* Javne rute / Public routes */}
           <Route path="/login" element={<LoginPage />} />
@@ -82,9 +92,9 @@ function App() {
           <Route
             path="/products"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute roles={['ADMIN']}>
                 <MainLayout>
-                  <PlaceholderPage titleKey="nav.products" icon="📦" />
+                  <ProductsPage />
                 </MainLayout>
               </ProtectedRoute>
             }
@@ -93,9 +103,20 @@ function App() {
           <Route
             path="/inventory"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute roles={['ADMIN']}>
                 <MainLayout>
-                  <PlaceholderPage titleKey="nav.inventory" icon="🗃️" />
+                  <InventoryPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/inventory/purchase"
+            element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <MainLayout>
+                  <PurchasePage />
                 </MainLayout>
               </ProtectedRoute>
             }
@@ -118,7 +139,7 @@ function App() {
             element={
               <ProtectedRoute roles={['ADMIN']}>
                 <MainLayout>
-                  <PlaceholderPage titleKey="nav.categories" icon="🏷️" />
+                  <CategoriesPage />
                 </MainLayout>
               </ProtectedRoute>
             }
@@ -163,7 +184,8 @@ function App() {
           {/* 404 / Not found */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
-      </AuthProvider>
+        </AuthProvider>
+      </ToastProvider>
     </BrowserRouter>
   )
 }
