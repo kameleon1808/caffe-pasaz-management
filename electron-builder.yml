@@ -1,0 +1,52 @@
+# ==============================================================================
+# electron-builder konfiguracija za Windows .exe pakovanje
+# electron-builder configuration for Windows .exe packaging
+# ==============================================================================
+
+appId: com.caffepassaz.management
+productName: "Kafić Pasaz"
+copyright: "Copyright © 2025 Kafić Pasaz"
+
+# Direktorijumi / Directories
+directories:
+  output: dist
+  buildResources: build
+
+# Fajlovi koji se pakuju / Files to package
+files:
+  - out/**/*
+  - node_modules/.prisma/**/*
+  - node_modules/@prisma/client/**/*
+  - prisma/schema.prisma
+  - package.json
+  - "!node_modules/**/{CHANGELOG.md,README.md,README,readme.md,readme}"
+  - "!node_modules/**/{test,__tests__,tests,powered-test,example,examples}"
+
+# ASAR pakovanje / ASAR packaging
+asar: true
+asarUnpack:
+  - node_modules/.prisma/**/*
+  - node_modules/@prisma/client/**/*
+
+# Windows konfiguracija / Windows configuration
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: build/icon.ico
+  requestedExecutionLevel: asInvoker
+
+# NSIS installer konfiguracija / NSIS installer configuration
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  installerLanguages:
+    - sr
+    - en
+  language: "2074"
+  shortcutName: "Kafić Pasaz"
+  uninstallDisplayName: "Kafić Pasaz Management"
+  createDesktopShortcut: true
+  createStartMenuShortcut: true

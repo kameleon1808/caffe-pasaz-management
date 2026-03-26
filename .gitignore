@@ -1,0 +1,35 @@
+# Zavisnosti / Dependencies
+node_modules/
+
+# Build izlaz / Build output
+out/
+dist/
+
+# Baza podataka / Database
+prisma/*.db
+prisma/*.db-journal
+
+# Okruženje / Environment
+.env
+.env.local
+.env.*.local
+
+# OS fajlovi / OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Electron packaged apps
+release/
+
+# Claude Code memory (local dev tool)
+.claude/
