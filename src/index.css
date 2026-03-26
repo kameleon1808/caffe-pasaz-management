@@ -1,0 +1,77 @@
+/* ===========================================================================
+   Globalni CSS stilovi — Kafić Pasaz Management
+   Global CSS styles — Kafić Pasaz Management
+   ===========================================================================
+   Tailwind CSS directives / Tailwind CSS direktive
+   =========================================================================== */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===========================================================================
+   Bazni stilovi / Base styles
+   =========================================================================== */
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html, body, #root {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont,
+                 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: #1a1a2e;
+    color: #e2e8f0;
+    /* Onemogući Electron default ponašanje / Disable Electron default behavior */
+    user-select: none;
+    -webkit-app-region: no-drag;
+  }
+
+  /* Dozvoli selekciju teksta u input poljima / Allow text selection in input fields */
+  input, textarea, [contenteditable] {
+    user-select: text;
+  }
+
+  /* Scrollbar stilizacija / Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+}
+
+/* ===========================================================================
+   Pomoćne klase / Utility classes
+   =========================================================================== */
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
