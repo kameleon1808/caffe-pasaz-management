@@ -316,11 +316,11 @@ export function ProductsPage() {
         <select
           value={filterCatId ?? ''}
           onChange={e => setFilterCatId(e.target.value ? parseInt(e.target.value) : undefined)}
-          className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-primary-500 text-sm"
+          className="px-3 py-2 bg-surface-input border border-white/20 rounded-lg text-white focus:outline-none focus:border-primary-500 text-sm"
         >
-          <option value="">{t('products.all_categories')}</option>
+          <option value="" className="bg-surface-input text-white">{t('products.all_categories')}</option>
           {categories.filter(c => c.active).map(c => (
-            <option key={c.id} value={c.id}>{c.nameSr}</option>
+            <option key={c.id} value={c.id} className="bg-surface-input text-white">{c.nameSr}</option>
           ))}
         </select>
         <label className="flex items-center gap-2 text-sm text-white/60 cursor-pointer select-none">
@@ -355,11 +355,11 @@ export function ProductsPage() {
             <select
               value={form.categoryId}
               onChange={e => setForm(f => ({ ...f, categoryId: e.target.value }))}
-              className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-primary-500 text-sm"
+              className="w-full px-3 py-2 bg-surface-input border border-white/20 rounded-lg text-white focus:outline-none focus:border-primary-500 text-sm"
             >
-              <option value="">{t('products.all_categories')}</option>
+              <option value="" className="bg-surface-input text-white">{t('products.all_categories')}</option>
               {categories.filter(c => c.active).map(c => (
-                <option key={c.id} value={c.id}>{c.nameSr}</option>
+                <option key={c.id} value={c.id} className="bg-surface-input text-white">{c.nameSr}</option>
               ))}
             </select>
           </FormField>
@@ -409,9 +409,9 @@ export function ProductsPage() {
               <select
                 value={form.unit}
                 onChange={e => setForm(f => ({ ...f, unit: e.target.value }))}
-                className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-primary-500 text-sm"
+                className="w-full px-3 py-2 bg-surface-input border border-white/20 rounded-lg text-white focus:outline-none focus:border-primary-500 text-sm"
               >
-                {UNITS.map(u => <option key={u} value={u}>{u}</option>)}
+                {UNITS.map(u => <option key={u} value={u} className="bg-surface-input text-white">{u}</option>)}
               </select>
             </FormField>
           </div>

@@ -216,11 +216,11 @@ export function PurchasePage() {
                       value={row.productId}
                       onChange={e => updateRow(row.id, 'productId', e.target.value)}
                       disabled={loadingProd}
-                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-primary-500 text-sm disabled:opacity-50"
+                      className="w-full px-3 py-2 bg-surface-input border border-white/20 rounded-lg text-white focus:outline-none focus:border-primary-500 text-sm disabled:opacity-50"
                     >
-                      <option value="">{t('purchase.select_product')}</option>
+                      <option value="" className="bg-surface-input text-white">{t('purchase.select_product')}</option>
                       {products.map(p => (
-                        <option key={p.id} value={p.id}>
+                        <option key={p.id} value={p.id} className="bg-surface-input text-white">
                           {p.nameSr} ({p.stockQuantity} {p.unit})
                         </option>
                       ))}

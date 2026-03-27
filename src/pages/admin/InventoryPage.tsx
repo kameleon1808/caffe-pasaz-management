@@ -205,11 +205,11 @@ export function InventoryPage() {
         <select
           value={filterCatId ?? ''}
           onChange={e => setFilterCatId(e.target.value ? parseInt(e.target.value) : undefined)}
-          className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-primary-500 text-sm"
+          className="px-3 py-2 bg-surface-input border border-white/20 rounded-lg text-white focus:outline-none focus:border-primary-500 text-sm"
         >
-          <option value="">{t('inventory.all_categories')}</option>
+          <option value="" className="bg-surface-input text-white">{t('inventory.all_categories')}</option>
           {categories.map(c => (
-            <option key={c.id} value={c.id}>{c.nameSr}</option>
+            <option key={c.id} value={c.id} className="bg-surface-input text-white">{c.nameSr}</option>
           ))}
         </select>
       </div>
