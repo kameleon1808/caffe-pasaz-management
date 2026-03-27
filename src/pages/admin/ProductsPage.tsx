@@ -30,7 +30,7 @@ import {
 import { fetchCategories, type CategoryWithCount } from '../../api/categories'
 import type { Product } from '../../types'
 
-const UNITS = ['kom', 'lit', 'dcl', 'flaša'] as const
+const UNITS = ['kom', 'lit', 'dcl', 'flaša', 'g'] as const
 
 interface ProductForm {
   categoryId:    string
