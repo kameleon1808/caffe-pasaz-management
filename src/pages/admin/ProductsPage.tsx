@@ -158,7 +158,6 @@ export function ProductsPage() {
     const e: FormErrors = {}
     if (!form.categoryId) e.categoryId = t('products.category')
     if (!form.nameSr.trim()) e.nameSr = t('products.name_sr')
-    if (!form.nameEn.trim()) e.nameEn = t('products.name_en')
     const price = parseFloat(form.price)
     if (isNaN(price) || price <= 0) e.price = t('products.price')
     const qty = parseInt(form.stockQuantity)
@@ -191,7 +190,8 @@ export function ProductsPage() {
       }
       setModalOpen(false)
       loadProducts()
-    } catch {
+    } catch (err) {
+      console.error('[ProductsPage] handleSave error:', err)
       showToast(t('products.error_save'), 'error')
     } finally {
       setSaving(false)
@@ -374,7 +374,7 @@ export function ProductsPage() {
                 className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-primary-500 text-sm"
               />
             </FormField>
-            <FormField label={t('products.name_en')} error={errors.nameEn} required>
+            <FormField label={t('products.name_en')} error={errors.nameEn}>
               <input
                 type="text"
                 value={form.nameEn}

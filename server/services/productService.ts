@@ -23,7 +23,7 @@ export type Unit = typeof ALLOWED_UNITS[number]
 export interface CreateProductData {
   categoryId:    number
   nameSr:        string
-  nameEn:        string
+  nameEn?:       string
   price:         number
   stockQuantity: number
   unit:          Unit
@@ -137,7 +137,7 @@ export async function createProduct(data: CreateProductData) {
   }
 
   return prisma.product.create({
-    data:    { ...data, active: true },
+    data:    { ...data, nameEn: data.nameEn ?? '', active: true },
     include: { category: true }
   })
 }

@@ -17,9 +17,12 @@ import cors from 'cors'
 import { config } from 'dotenv'
 import { resolve } from 'path'
 
-import { requestLogger }  from './middleware/logger'
-import { errorHandler }   from './middleware/errorHandler'
-import { authRouter }     from './routes/auth'
+import { requestLogger }    from './middleware/logger'
+import { errorHandler }     from './middleware/errorHandler'
+import { authRouter }       from './routes/auth'
+import { categoriesRouter } from './routes/categories'
+import { productsRouter }   from './routes/products'
+import { inventoryRouter }  from './routes/inventory'
 
 // Učitaj .env fajl / Load .env file
 config({ path: resolve(process.cwd(), '.env') })
@@ -69,6 +72,15 @@ function createApp(): Application {
 
   // Autentifikacija / Authentication
   app.use('/api/v1/auth', authRouter)
+
+  // Kategorije / Categories
+  app.use('/api/v1/categories', categoriesRouter)
+
+  // Proizvodi / Products
+  app.use('/api/v1/products', productsRouter)
+
+  // Magacin / Inventory
+  app.use('/api/v1/inventory', inventoryRouter)
 
   // ── Error Handler (mora biti poslednji!) ──────────────────────────────────
   // Error Handler (must be last!)
