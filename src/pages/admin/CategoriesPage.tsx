@@ -42,6 +42,11 @@ import {
   type CategoryWithCount,
 } from '../../api/categories'
 
+/** Podaci o neaktivnoj kategoriji koji se dobijaju uz grešku / Inactive category data received with the error */
+interface InactiveDuplicate {
+  existingCategory: CategoryWithCount
+}
+
 // ─── Sortable Row ─────────────────────────────────────────────────────────────
 
 interface SortableRowProps {
@@ -163,11 +168,15 @@ export function CategoriesPage() {
   const [showInactive,  setShowInactive]  = useState(false)
   const [saving,        setSaving]        = useState(false)
   const [deleting,      setDeleting]      = useState(false)
+  const [reactivating,  setReactivating]  = useState(false)
 
   // Modal state
   const [modalOpen,     setModalOpen]     = useState(false)
   const [editTarget,    setEditTarget]    = useState<CategoryWithCount | null>(null)
   const [deleteTarget,  setDeleteTarget]  = useState<CategoryWithCount | null>(null)
+
+  // Reactivation confirm state
+  const [reactivateTarget, setReactivateTarget] = useState<CategoryWithCount | null>(null)
 
   // Form state
   const [form,   setForm]   = useState<CategoryForm>({ nameSr: '', nameEn: '', sortOrder: '' })
@@ -244,10 +253,37 @@ export function CategoriesPage() {
       }
       setModalOpen(false)
       load()
+    } catch (err: unknown) {
+      const apiErr = err as { code?: string; details?: InactiveDuplicate }
+      if (apiErr.code === 'CATEGORY_DUPLICATE_INACTIVE' && apiErr.details?.existingCategory) {
+        // Zatvori formu i otvori dijalog za reaktivaciju
+        // Close the form and open the reactivation dialog
+        setModalOpen(false)
+        setReactivateTarget(apiErr.details.existingCategory)
+      } else if (apiErr.code === 'CATEGORY_DUPLICATE') {
+        showToast(t('categories.error_duplicate'), 'error')
+      } else {
+        showToast(t('categories.error_save'), 'error')
+      }
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // ─── Reactivate ────────────────────────────────────────────────────────────
+
+  async function handleReactivate() {
+    if (!reactivateTarget) return
+    setReactivating(true)
+    try {
+      await updateCategory(reactivateTarget.id, { active: true })
+      showToast(t('categories.success_reactivate'), 'success')
+      setReactivateTarget(null)
+      load()
     } catch {
       showToast(t('categories.error_save'), 'error')
     } finally {
-      setSaving(false)
+      setReactivating(false)
     }
   }
 
@@ -436,6 +472,53 @@ export function CategoriesPage() {
         confirmLabel={t('common.delete')}
         loading={deleting}
       />
+
+      {/* Reactivate Modal */}
+      <Modal
+        open={!!reactivateTarget}
+        onClose={() => { if (!reactivating) setReactivateTarget(null) }}
+        title={t('categories.reactivate_title')}
+        size="sm"
+      >
+        {reactivateTarget && (
+          <div className="flex flex-col gap-4">
+            <p className="text-sm text-white/70">{t('categories.reactivate_message')}</p>
+
+            {/* Podaci o postojećoj kategoriji / Existing category details */}
+            <div className="rounded-lg bg-white/5 border border-white/10 divide-y divide-white/10 text-sm">
+              <div className="flex justify-between px-4 py-2.5">
+                <span className="text-white/50">{t('categories.reactivate_info_name_sr')}</span>
+                <span className="font-medium text-white">{reactivateTarget.nameSr}</span>
+              </div>
+              <div className="flex justify-between px-4 py-2.5">
+                <span className="text-white/50">{t('categories.reactivate_info_name_en')}</span>
+                <span className="font-medium text-white">{reactivateTarget.nameEn}</span>
+              </div>
+              <div className="flex justify-between px-4 py-2.5">
+                <span className="text-white/50">{t('categories.reactivate_info_products')}</span>
+                <span className="font-medium text-white">{reactivateTarget._count.products}</span>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-1">
+              <button
+                onClick={() => setReactivateTarget(null)}
+                disabled={reactivating}
+                className="px-4 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-50"
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                onClick={handleReactivate}
+                disabled={reactivating}
+                className="px-4 py-2 bg-primary-500 text-black text-sm font-medium rounded-lg hover:bg-primary-600 transition-colors disabled:opacity-50"
+              >
+                {reactivating ? t('common.loading') : t('categories.reactivate_confirm')}
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   )
 }

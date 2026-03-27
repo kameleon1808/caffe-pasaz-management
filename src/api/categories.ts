@@ -18,11 +18,12 @@ async function req<T>(url: string, options: RequestInit = {}): Promise<T> {
     ...options,
     headers: { 'Content-Type': 'application/json', Authorization: authHeader, ...options.headers }
   })
-  const json = await res.json() as { success: boolean; data?: T; message?: string; error?: { code: string; message: string } }
+  const json = await res.json() as { success: boolean; data?: T; message?: string; error?: { code: string; message: string; details?: unknown } }
 
   if (!res.ok || !json.success) {
-    const err = new Error(json.error?.message ?? `HTTP ${res.status}`) as Error & { code?: string }
-    err.code = json.error?.code
+    const err = new Error(json.error?.message ?? `HTTP ${res.status}`) as Error & { code?: string; details?: unknown }
+    err.code    = json.error?.code
+    err.details = json.error?.details
     throw err
   }
   return json.data as T
