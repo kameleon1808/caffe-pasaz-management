@@ -45,7 +45,8 @@ import { TableLayoutPage } from './pages/admin/TableLayoutPage'
 import { BillPage }        from './pages/BillPage'
 
 // Stranice — Faza 6 / Pages — Phase 6
-import { ShiftSummaryPage } from './pages/ShiftSummaryPage'
+import { ShiftSummaryPage }   from './pages/ShiftSummaryPage'
+import { ShiftsHistoryPage }  from './pages/admin/ShiftsHistoryPage'
 
 // Placeholder stranice za buduće faze / Placeholder pages for future phases
 import { PlaceholderPage } from './pages/PlaceholderPage'
@@ -135,12 +136,24 @@ function App() {
             }
           />
 
+          {/* Istorija smena — admin / Shift history — admin (Faza 6.3) */}
+          <Route
+            path="/admin/shifts"
+            element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <MainLayout>
+                  <ShiftsHistoryPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+
           <Route
             path="/shifts"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute roles={['ADMIN']}>
                 <MainLayout>
-                  <PlaceholderPage titleKey="nav.shifts" icon="⏰" />
+                  <ShiftsHistoryPage />
                 </MainLayout>
               </ProtectedRoute>
             }

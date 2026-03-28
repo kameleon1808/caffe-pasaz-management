@@ -5,7 +5,13 @@
  */
 
 import { getAuthHeader }              from '../utils/token'
-import type { Shift, ShiftSummary }  from '../types'
+import type {
+  Shift,
+  ShiftSummary,
+  ShiftInventorySummary,
+  InventoryAdjustData,
+  ShiftListResult,
+} from '../types'
 
 const BASE = 'http://localhost:3001/api/v1/shifts'
 
@@ -95,4 +101,82 @@ export function getShiftHistory(limit = 20): Promise<Shift[]> {
  */
 export function getShiftSummary(shiftId: number): Promise<ShiftSummary> {
   return req<ShiftSummary>(`${BASE}/${shiftId}/summary`)
+}
+
+/**
+ * Vraća stanje magacina za datu smenu.
+ * Returns the warehouse state for the given shift.
+ *
+ * @param {number} shiftId - ID smene / Shift ID
+ * @returns {Promise<ShiftInventorySummary>}
+ */
+export function getShiftInventorySummary(shiftId: number): Promise<ShiftInventorySummary> {
+  return req<ShiftInventorySummary>(`${BASE}/${shiftId}/inventory-summary`)
+}
+
+/**
+ * Ručna korekcija inventara u kontekstu smene.
+ * Manual inventory adjustment in the context of a shift.
+ *
+ * @param {number}              shiftId - ID smene / Shift ID
+ * @param {InventoryAdjustData} data    - Podaci za korekciju / Adjustment data
+ * @returns {Promise<void>}
+ */
+export function adjustShiftInventory(
+  shiftId: number,
+  data:    InventoryAdjustData
+): Promise<void> {
+  return req<void>(`${BASE}/${shiftId}/inventory-adjust`, {
+    method: 'POST',
+    body:   JSON.stringify(data),
+  })
+}
+
+/**
+ * Potvrđuje i završava smenu po ID-u.
+ * Confirms and ends a shift by ID.
+ *
+ * @param {number} shiftId - ID smene / Shift ID
+ * @returns {Promise<Shift>} Završena smena / Ended shift
+ */
+export function endShiftById(shiftId: number): Promise<Shift> {
+  return req<Shift>(`${BASE}/${shiftId}/end`, {
+    method: 'POST',
+    body:   JSON.stringify({ confirm: true }),
+  })
+}
+
+/**
+ * Šalje zahtev za štampanje sumarnog izveštaja smene.
+ * Sends a request to print the shift summary report.
+ *
+ * @param {number} shiftId - ID smene / Shift ID
+ * @returns {Promise<void>}
+ */
+export function printShiftSummary(shiftId: number): Promise<void> {
+  return req<void>(`${BASE}/${shiftId}/print-summary`, { method: 'POST' })
+}
+
+/**
+ * Vraća paginiranu listu smena (admin).
+ * Returns paginated shift list (admin).
+ *
+ * @param params - Filteri i paginacija / Filters and pagination
+ * @returns {Promise<ShiftListResult>}
+ */
+export function getShiftList(params: {
+  userId?:   number
+  dateFrom?: string
+  dateTo?:   string
+  page?:     number
+  limit?:    number
+} = {}): Promise<ShiftListResult> {
+  const qs = new URLSearchParams()
+  if (params.userId   !== undefined) qs.set('userId',   String(params.userId))
+  if (params.dateFrom)               qs.set('dateFrom', params.dateFrom)
+  if (params.dateTo)                 qs.set('dateTo',   params.dateTo)
+  if (params.page     !== undefined) qs.set('page',     String(params.page))
+  if (params.limit    !== undefined) qs.set('limit',    String(params.limit))
+  const query = qs.toString()
+  return req<ShiftListResult>(`${BASE}${query ? `?${query}` : ''}`)
 }

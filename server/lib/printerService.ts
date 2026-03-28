@@ -299,6 +299,100 @@ export async function printReceipt(
 }
 
 /**
+ * Podaci za štampanje sumarnog izveštaja smene.
+ * Data for printing the shift summary report.
+ */
+export interface PrintShiftSummaryData {
+  shiftId:    number
+  waiterName: string
+  startedAt:  Date | string
+  endedAt:    Date | string | null
+  revenue: {
+    total:     number
+    white:     number
+    black:     number
+    paidCount: number
+  }
+  salesByProduct: Array<{
+    nameSr:      string
+    soldTotal:   number
+    totalAmount: number
+  }>
+}
+
+/**
+ * Štampa sumarni izveštaj smene na POS štampaču.
+ * Prints the shift summary report on the POS printer.
+ *
+ * @param {PrintShiftSummaryData} data   - Podaci izveštaja / Report data
+ * @param {PrinterConfig}         config - Konfiguracija štampača / Printer config
+ * @param {CafeInfo}              cafe   - Podaci o kafeu / Cafe info
+ * @throws {Error} Ako štampač nije dostupan / If printer is not available
+ */
+export async function printShiftSummaryReport(
+  data:   PrintShiftSummaryData,
+  config: PrinterConfig,
+  cafe:   CafeInfo
+): Promise<void> {
+  if (config.type === 'disabled') {
+    throw new Error('Štampač je onesposobljen / Printer is disabled')
+  }
+
+  const printer = createPrinterInstance(config)
+  const w   = config.width
+  const sep = '='.repeat(w)
+  const dsh = '-'.repeat(w)
+
+  // ── Zaglavlje / Header ─────────────────────────────────────────────────
+  printer.alignCenter()
+  printer.bold(true)
+  printer.setTextSize(1, 1)
+  printer.println('IZVESTAJ SMENE')
+  printer.bold(false)
+  printer.setTextSize(0, 0)
+  printer.println(sep)
+
+  // ── Info o smeni / Shift info ─────────────────────────────────────────
+  printer.alignLeft()
+  printer.println(`Konobar: ${data.waiterName}`)
+  printer.println(`Pocetak: ${formatDate(data.startedAt)}`)
+  printer.println(`Kraj:    ${data.endedAt ? formatDate(data.endedAt) : 'U toku'}`)
+  printer.println(dsh)
+
+  // ── Promet / Revenue ──────────────────────────────────────────────────
+  printer.println(padLine('Ukupan promet:', `${formatAmount(data.revenue.total)} RSD`, w))
+  printer.println(padLine('Belo:',          `${formatAmount(data.revenue.white)} RSD`, w))
+  printer.println(padLine('Crno:',          `${formatAmount(data.revenue.black)} RSD`, w))
+  printer.println(padLine('Racuna:',        String(data.revenue.paidCount), w))
+  printer.println(dsh)
+
+  // ── Top prodaja / Top sales ───────────────────────────────────────────
+  if (data.salesByProduct.length > 0) {
+    printer.println('TOP PRODAJA:')
+    const top = data.salesByProduct.slice(0, 10)
+    top.forEach((item, idx) => {
+      const rank  = `${idx + 1}. `
+      const right = `x${item.soldTotal}  ${formatAmount(item.totalAmount)} RSD`
+      const name  = item.nameSr.substring(0, w - right.length - rank.length - 1)
+      printer.println(padLine(rank + name, right, w))
+    })
+  }
+
+  printer.println(sep)
+  printer.alignCenter()
+  printer.println(formatDate(new Date()))
+  printer.println(sep)
+  printer.cut()
+
+  // ── Slanje / Send ─────────────────────────────────────────────────────
+  const isConnected = await printer.isPrinterConnected()
+  if (!isConnected) {
+    throw new Error('Štampač nije dostupan / Printer not available')
+  }
+  await printer.execute()
+}
+
+/**
  * Štampa testnu stranicu sa konfiguracijom štampača.
  * Prints a test page with printer configuration.
  *

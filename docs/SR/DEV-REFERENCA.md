@@ -38,7 +38,7 @@ Electron Main Process
 │   │   ├── products.ts      ← /api/v1/products/*
 │   │   ├── inventory.ts     ← /api/v1/inventory/*
 │   │   ├── tables.ts        ← /api/v1/tables/*       (Faza 3)
-│   │   ├── shifts.ts        ← /api/v1/shifts/*       (Faza 3)
+│   │   ├── shifts.ts        ← /api/v1/shifts/*       (Faza 3, 6.1, 6.2, 6.3)
 │   │   ├── bills.ts         ← /api/v1/bills/*        (Faza 4)
 │   │   ├── settings.ts      ← /api/v1/settings/*     (Faza 5)
 │   │   └── print.ts         ← /api/v1/print/*        (Faza 5)
@@ -52,7 +52,7 @@ Electron Main Process
 │       ├── productService.ts
 │       ├── inventoryService.ts
 │       ├── tableService.ts    ← CRUD za stolove + isOccupied status  (Faza 3)
-│       ├── shiftService.ts    ← pokretanje/završetak smena            (Faza 3)
+│       ├── shiftService.ts    ← pokretanje/završetak/izveštaj smena   (Faza 3, 6.1–6.3)
 │       ├── billService.ts     ← kreiranje/pregled/zatvaranje računa   (Faza 4)
 │       └── settingsService.ts ← čitanje/čuvanje Setting ključeva      (Faza 5)
 │
@@ -76,7 +76,10 @@ Electron Renderer Process (Vite → React)
 │   ├── products.ts
 │   ├── inventory.ts
 │   ├── tables.ts             ← getTables, getTable, createTable, ...       (Faza 3)
-│   ├── shifts.ts             ← startShift, endShift, getActiveShift        (Faza 3)
+│   ├── shifts.ts             ← startShift, endShift, getActiveShift,        (Faza 3, 6.1–6.3)
+│   │                            getShiftSummary, getShiftInventorySummary,
+│   │                            adjustShiftInventory, endShiftById, getShiftList,
+│   │                            printShiftSummary
 │   ├── bills.ts              ← createBill, fetchBill, payBill...           (Faza 4)
 │   ├── settings.ts           ← fetchPrinterSettings, savePrinterSettings   (Faza 5)
 │   └── print.ts              ← printReceipt, printTestPage                 (Faza 5)
@@ -98,13 +101,16 @@ Electron Renderer Process (Vite → React)
     ├── PlaceholderPage.tsx
     ├── TablesPage.tsx         ← vizuelni prikaz stolova po zonama           (Faza 3)
     ├── BillPage.tsx           ← prikaz i zatvaranje računa                  (Faza 4)
+    ├── ShiftSummaryPage.tsx   ← izveštaj smene: promet, prodaja, inventar,  (Faza 6.1–6.3)
+    │                             korekcije, potvrda završetka
     └── admin/
         ├── CategoriesPage.tsx
         ├── ProductsPage.tsx
         ├── InventoryPage.tsx
         ├── PurchasePage.tsx
-        ├── TableLayoutPage.tsx   ← admin editor rasporeda stolova          (Faza 3)
-        └── PrinterSettingsPage.tsx ← konfiguracija POS štampača           (Faza 5)
+        ├── TableLayoutPage.tsx      ← admin editor rasporeda stolova       (Faza 3)
+        ├── PrinterSettingsPage.tsx  ← konfiguracija POS štampača          (Faza 5)
+        └── ShiftsHistoryPage.tsx    ← istorija smena sa filterima         (Faza 6.3)
 ```
 
 **Tok podataka / Data flow:**
@@ -535,6 +541,146 @@ Završava aktivnu smenu trenutnog korisnika.
 
 ---
 
+### `GET /shifts/:id/summary` (Faza 6.1)
+
+**Izvor:** `server/routes/shifts.ts` | Zahteva: `requireAuth`
+
+Vraća sumarni izveštaj smene — promet i prodaja po artiklima. Ne zatvara smenu.
+
+**Uspešan odgovor `200`:**
+```json
+{
+  "success": true,
+  "data": {
+    "openBillsCount": 0,
+    "revenue": { "total": 15000, "white": 9000, "black": 6000, "paidCount": 12, "cancelledCount": 1, "averageBill": 1250 },
+    "salesByProduct": [
+      { "productId": 1, "nameSr": "Espresso", "nameEn": "Espresso", "categorySr": "Kafa", "categoryEn": "Coffee", "soldTotal": 45, "soldWhite": 30, "soldBlack": 15, "totalAmount": 6750 }
+    ]
+  }
+}
+```
+
+---
+
+### `GET /shifts/:id/inventory-summary` (Faza 6.2)
+
+**Izvor:** `server/routes/shifts.ts` | Zahteva: `requireAuth`
+
+Vraća stanje magacina za datu smenu — retroaktivno izračunato stanje na početku, prodato, nabavljeno, korekcije i trenutno stanje.
+
+**Uspešan odgovor `200`:**
+```json
+{
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "productId": 1, "nameSr": "Espresso", "nameEn": "Espresso", "unit": "kom",
+        "categorySr": "Kafa", "categoryEn": "Coffee",
+        "startStock": 100, "sold": 45, "purchased": 0, "adjusted": 0, "currentStock": 55
+      }
+    ],
+    "minStockThreshold": 5
+  }
+}
+```
+
+Formula: `startStock = currentStock + sold - purchased - adjusted`
+
+---
+
+### `POST /shifts/:id/inventory-adjust` (Faza 6.2)
+
+**Izvor:** `server/routes/shifts.ts` | Zahteva: `requireAuth`
+
+Ručna korekcija inventara u kontekstu smene.
+
+| Polje     | Tip    | Obavezno | Opis                          |
+|-----------|--------|----------|-------------------------------|
+| productId | number | da       | ID proizvoda                  |
+| changeQty | number | da       | Promena (+/-), nije 0         |
+| type      | string | da       | `"WASTE"` ili `"ADJUSTMENT"`  |
+| note      | string | da       | Razlog korekcije              |
+
+**Razlika tipova:**
+- `WASTE` — fizički gubitak (prosipanje, lom, kvar)
+- `ADJUSTMENT` — ispravka greške u evidenciji (popis, pogrešan unos)
+
+**Kodovi grešaka:**
+
+| Kod              | HTTP | Uzrok                             |
+|------------------|------|-----------------------------------|
+| `NOTE_REQUIRED`  | 400  | Napomena je prazna                |
+| `NEGATIVE_STOCK` | 400  | Korekcija bi dala negativno stanje|
+| `INVALID_TYPE`   | 400  | Tip nije WASTE niti ADJUSTMENT    |
+
+---
+
+### `POST /shifts/:id/end` (Faza 6.3)
+
+**Izvor:** `server/routes/shifts.ts` | Zahteva: `requireAuth`
+
+Potvrđuje i završava smenu po ID-u. Konobar može završiti samo svoju smenu; admin može završiti bilo koju.
+
+**Zahtev:**
+```json
+{ "confirm": true }
+```
+
+**Kodovi grešaka:**
+
+| Kod                    | HTTP | Uzrok                               |
+|------------------------|------|-------------------------------------|
+| `CONFIRM_REQUIRED`     | 400  | `confirm` nije `true`               |
+| `FORBIDDEN`            | 403  | Smena ne pripada korisniku          |
+| `SHIFT_ALREADY_ENDED`  | 409  | Smena je već završena               |
+| `SHIFT_HAS_OPEN_BILLS` | 409  | Postoje otvoreni računi             |
+
+---
+
+### `POST /shifts/:id/print-summary` (Faza 6.3)
+
+**Izvor:** `server/routes/shifts.ts` | Zahteva: `requireAuth`
+
+Štampa sumarni izveštaj smene na POS štampaču. Nema tela zahteva.
+
+---
+
+### `GET /shifts` **[ADMIN]** (Faza 6.3)
+
+**Izvor:** `server/routes/shifts.ts` | Zahteva: `requireAdmin`
+
+Paginirana lista svih smena sa opcionim filterima.
+
+| Query param | Tip    | Default | Opis                              |
+|-------------|--------|---------|-----------------------------------|
+| userId      | number | —       | Filter po korisniku               |
+| dateFrom    | string | —       | Od datuma (`YYYY-MM-DD`)          |
+| dateTo      | string | —       | Do datuma (`YYYY-MM-DD`)          |
+| page        | number | 1       | Broj stranice                     |
+| limit       | number | 20      | Broj po strani                    |
+
+**Uspešan odgovor `200`:**
+```json
+{
+  "success": true,
+  "data": {
+    "shifts": [
+      {
+        "id": 5, "userId": 2, "startedAt": "2026-03-28T08:00:00Z", "endedAt": "2026-03-28T16:00:00Z",
+        "totalRevenue": 15000, "totalWhite": 9000, "totalBlack": 6000,
+        "user": { "id": 2, "fullName": "Marko Konobar", "username": "marko" },
+        "paidBillsCount": 12
+      }
+    ],
+    "total": 45, "page": 1, "limit": 20
+  }
+}
+```
+
+---
+
 ### `GET /bills/table/:tableId`
 
 **Izvor:** `server/routes/bills.ts` | Zahteva: `requireAuth`
@@ -913,13 +1059,28 @@ export async function updateTablePositions(positions: { id: number; positionX: n
 **Izvor:** `server/services/shiftService.ts`
 
 ```typescript
+// Faza 3 — osnovno upravljanje smenama
 export async function getActiveShift(userId: number): Promise<Shift | null>
 export async function startShift(userId: number): Promise<Shift>
 export async function endShift(userId: number): Promise<Shift>
+export async function getShiftHistory(userId: number, limit?: number): Promise<Shift[]>
+
+// Faza 6.1 — sumarni izveštaj
+export async function getShiftSummary(shiftId: number): Promise<ShiftSummaryResult>
+
+// Faza 6.2 — inventar smene
+export async function getShiftInventorySummary(shiftId: number): Promise<ShiftInventoryResult>
+export async function adjustShiftInventory(shiftId: number, data: ShiftInventoryAdjustData): Promise<void>
+
+// Faza 6.3 — potvrda završetka i istorija
+export async function endShiftById(shiftId: number, userId: number, isAdmin: boolean): Promise<Shift>
+export async function getShiftList(params: ShiftListParams): Promise<ShiftListResult>
 ```
 
 `startShift` baca `SHIFT_ALREADY_ACTIVE` (409) ako postoji aktivna smena.
 `endShift` baca `NO_ACTIVE_SHIFT` (404) ako nema aktivne smene.
+`endShiftById` validira vlasništvo — konobar može završiti samo svoju smenu.
+`adjustShiftInventory` baca `NOTE_REQUIRED` (400) ako je napomena prazna, `NEGATIVE_STOCK` (400) ako bi rezultovalo negativnim stanjem.
 
 ---
 
@@ -986,6 +1147,8 @@ export async function printReceipt(bill: PrintBillData, config: PrinterConfig, c
 export async function printTestPage(config: PrinterConfig, cafe: CafeInfo): Promise<void>
 export async function loadPrinterConfig(): Promise<PrinterConfig>
 export async function loadCafeInfo(): Promise<CafeInfo>
+// Faza 6.3 — štampanje izveštaja smene
+export async function printShiftSummaryReport(data: PrintShiftSummaryData, config: PrinterConfig, cafe: CafeInfo): Promise<void>
 ```
 
 Koristi `node-thermal-printer` biblioteku (ESC/POS protokol). Podržava:
@@ -1361,6 +1524,47 @@ Blokira pristup stranici ako korisnik nema aktivnu smenu. Prikazuje ekran za pok
 - Svaki red: select proizvoda (prikazuje trenutno stanje), input količine, input napomene
 - Grupna validacija svih redova pre slanja
 - `POST /inventory/purchase` → redirect na `/inventory`
+
+### `<ShiftSummaryPage>` (Faza 6.1–6.3)
+
+**Izvor:** `src/pages/ShiftSummaryPage.tsx`
+
+**Ruta:** `/shift/summary`
+
+Sumarni izveštaj aktivne smene sa 4 sekcije:
+
+| Sekcija | Sadržaj |
+|---------|---------|
+| **A — Promet** | 6 kartica: Ukupno, Belo, Crno, Naplaćenih računa, Otkazanih, Prosek |
+| **B — Prodaja po artiklima** | Tabela sortirana po količini, footer sa totalima |
+| **C — Stanje magacina** | Tabela sa startStock/sold/purchased/adjusted/currentStock; dugme "Korekcija" |
+| **D — Potvrda završetka** | Zeleno dugme "Potvrdi i završi smenu" + dugme "Štampaj izveštaj" |
+
+**Sekcija C — boje redova:**
+- Žuti red: `currentStock === 0`
+- Crveni red: `0 < currentStock < minStockThreshold`
+
+**Sekcija D — logika:**
+- Dugme "Završi" je blokiran ako ima otvorenih računa (`openBillsCount > 0`)
+- Na potvrdu: `POST /shifts/:id/end` → `refreshShift()` → navigate `/dashboard`
+- Na štampanje: `POST /shifts/:id/print-summary`
+
+---
+
+### `<ShiftsHistoryPage>` **[ADMIN]** (Faza 6.3)
+
+**Izvor:** `src/pages/admin/ShiftsHistoryPage.tsx`
+
+**Ruta:** `/admin/shifts` i `/shifts`
+
+Admin pregled svih smena:
+- Filteri: konobar (dropdown sa unique korisnicima iz učitanih smena), datum od-do
+- Tabela: Konobar | Datum | Početak | Kraj | Trajanje | Promet | Belo | Crno | Računa
+- Paginacija: 20 po strani
+- Aktivne smene označene zelenim bedžom "Aktivna"
+- **Klik na red** → modal `<ShiftDetailModal>` — readonly pregled: metadata (4 kartice) + revenue kartice + tabela prodaje
+
+---
 
 ### `<PrinterSettingsPage>` **[ADMIN]** (Faza 5)
 
@@ -1841,6 +2045,37 @@ Preferencija se čuva u `localStorage` pod ključem `kafic_language`.
 | `printer.section_cafe`                 | Podaci o kafeu (za zaglavlje računa) | Cafe Info (for receipt header)        |
 | `dashboard.admin_printer_title`        | Štampač                              | Printer                               |
 | `dashboard.admin_printer_desc`         | Konfiguracija POS termalnog štampača | POS thermal printer configuration     |
+| **shifts.summary** (Faza 6.1)          |                                      |                                       |
+| `shifts.summary.title`                 | Izveštaj smene                       | Shift Report                          |
+| `shifts.summary.section_revenue`       | Promet smene                         | Shift Revenue                         |
+| `shifts.summary.section_sales`         | Prodaja po artiklima                 | Sales by Product                      |
+| `shifts.summary.section_inventory`     | Stanje magacina                      | Warehouse State                       |
+| `shifts.summary.card_total`            | Ukupan promet                        | Total Revenue                         |
+| `shifts.summary.card_white`            | Ukupno BELO                          | Total WHITE                           |
+| `shifts.summary.card_black`            | Ukupno CRNO                          | Total BLACK                           |
+| `shifts.summary.col_product`           | Proizvod                             | Product                               |
+| `shifts.summary.row_total`             | UKUPNO                               | TOTAL                                 |
+| **shifts.summary.inventory** (Faza 6.2)|                                     |                                       |
+| `shifts.summary.inventory.btn_adjust`  | Korekcija                            | Adjust                                |
+| `shifts.summary.inventory.type_adjustment` | Korekcija                        | Adjustment                            |
+| `shifts.summary.inventory.type_waste`  | Rastur/Lom                           | Waste/Breakage                        |
+| `shifts.summary.inventory.modal_note`  | Napomena                             | Note                                  |
+| `shifts.summary.inventory.legend_low`  | Ispod praga (< {{threshold}})        | Below threshold (< {{threshold}})     |
+| `shifts.summary.inventory.legend_zero` | Nema na stanju                       | Out of stock                          |
+| **shifts.confirm** (Faza 6.3)          |                                      |                                       |
+| `shifts.confirm.btn_end`               | Potvrdi i završi smenu               | Confirm & End Shift                   |
+| `shifts.confirm.btn_print`             | Štampaj izveštaj                     | Print Report                          |
+| `shifts.confirm.dialog_title`          | Završiti smenu?                      | End Shift?                            |
+| `shifts.confirm.end_success`           | Smena je uspešno završena            | Shift ended successfully              |
+| `shifts.confirm.print_success`         | Izveštaj je poslat na štampač        | Report sent to printer                |
+| **shifts.history** (Faza 6.3)          |                                      |                                       |
+| `shifts.history.title`                 | Istorija smena                       | Shift History                         |
+| `shifts.history.col_waiter`            | Konobar                              | Waiter                                |
+| `shifts.history.col_duration`          | Trajanje                             | Duration                              |
+| `shifts.history.col_revenue`           | Promet                               | Revenue                               |
+| `shifts.history.active_badge`          | Aktivna                              | Active                                |
+| `shifts.history.detail_title`          | Detalji smene                        | Shift Details                         |
+| `shifts.history.btn_filter`            | Primeni filter                       | Apply filter                          |
 
 ---
 

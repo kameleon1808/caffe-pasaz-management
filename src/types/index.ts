@@ -316,6 +316,84 @@ export interface ShiftSummary {
 }
 
 // ==============================================================================
+// INVENTAR SMENE / SHIFT INVENTORY
+// ==============================================================================
+
+/**
+ * Stavka inventara u izveštaju smene.
+ * Inventory item in the shift report.
+ */
+export interface InventorySummaryItem {
+  productId:    number
+  nameSr:       string
+  nameEn:       string
+  unit:         string
+  categorySr:   string
+  categoryEn:   string
+  /** Stanje na početku smene (retroaktivno) / Start-of-shift stock (retroactive) */
+  startStock:   number
+  /** Prodato u smeni (u jed. zaliha) / Sold in shift (stock units) */
+  sold:         number
+  /** Nabavljeno u smeni / Purchased in shift */
+  purchased:    number
+  /** Korekcije u smeni / Adjustments in shift */
+  adjusted:     number
+  /** Trenutno stanje / Current stock */
+  currentStock: number
+}
+
+/**
+ * Sumarni izveštaj inventara za smenu.
+ * Inventory summary for the shift.
+ */
+export interface ShiftInventorySummary {
+  items:             InventorySummaryItem[]
+  minStockThreshold: number
+}
+
+/**
+ * Podaci za ručnu korekciju inventara.
+ * Data for manual inventory adjustment.
+ */
+export interface InventoryAdjustData {
+  productId: number
+  changeQty: number
+  type:      'WASTE' | 'ADJUSTMENT'
+  note:      string
+}
+
+// ==============================================================================
+// ISTORIJA SMENA / SHIFT HISTORY
+// ==============================================================================
+
+/**
+ * Stavka u listi smena (za admin istoriju).
+ * Shift list item (for admin history).
+ */
+export interface ShiftListItem {
+  id:             number
+  userId:         number
+  startedAt:      string
+  endedAt:        string | null
+  totalRevenue:   number
+  totalWhite:     number
+  totalBlack:     number
+  user:           { id: number; fullName: string; username: string }
+  paidBillsCount: number
+}
+
+/**
+ * Rezultat upita liste smena sa paginacijom.
+ * Shift list query result with pagination.
+ */
+export interface ShiftListResult {
+  shifts: ShiftListItem[]
+  total:  number
+  page:   number
+  limit:  number
+}
+
+// ==============================================================================
 // PODEŠAVANJA / SETTINGS
 // ==============================================================================
 
