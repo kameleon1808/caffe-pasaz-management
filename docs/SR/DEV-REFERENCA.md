@@ -425,6 +425,201 @@ Vraća hronološku istoriju promena za jedan proizvod (zadnjih 100 zapisa, sorti
 }
 ```
 
+### `GET /tables`
+
+**Izvor:** `server/routes/tables.ts` | Zahteva: `requireAuth`
+
+Vraća sve aktivne stolove sa statusom (`isOccupied`, `openBillId`, `openBillTotal`).
+
+**Uspešan odgovor `200`:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1, "label": "Sto U1", "zone": "INDOOR",
+      "positionX": 100, "positionY": 150, "isOccupied": false, "active": true,
+      "openBillId": null, "openBillTotal": 0
+    }
+  ]
+}
+```
+
+---
+
+### `POST /tables` **[ADMIN]**
+
+Kreira novi sto.
+
+| Polje      | Tip    | Obavezno | Opis                         |
+|------------|--------|----------|------------------------------|
+| label      | string | da       | Naziv stola (jedinstven)     |
+| zone       | string | da       | `INDOOR` \| `OUTDOOR`       |
+| positionX  | number | ne       | X koordinata na mapi         |
+| positionY  | number | ne       | Y koordinata na mapi         |
+
+---
+
+### `PUT /tables/:id` **[ADMIN]**
+
+Menja sto. Podržava `label`, `zone`, `positionX`, `positionY`, `active`.
+
+---
+
+### `DELETE /tables/:id` **[ADMIN]**
+
+Soft delete stola (active = false). Nije moguće ako je sto zauzet.
+
+---
+
+### `PATCH /tables/positions` **[ADMIN]**
+
+Atomično menja pozicije više stolova odjednom (drag-and-drop editor).
+
+**Telo zahteva:**
+```json
+{ "positions": [{ "id": 1, "positionX": 120, "positionY": 200 }] }
+```
+
+---
+
+### `GET /shifts/active`
+
+**Izvor:** `server/routes/shifts.ts` | Zahteva: `requireAuth`
+
+Vraća aktivnu smenu trenutnog korisnika ili `null`.
+
+**Uspešan odgovor `200`:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 5, "userId": 2, "startedAt": "2026-03-28T08:00:00.000Z",
+    "endedAt": null, "totalWhite": 0, "totalBlack": 0, "totalRevenue": 0
+  }
+}
+```
+
+---
+
+### `POST /shifts/start`
+
+Pokreće novu smenu za trenutnog korisnika.
+
+**Kodovi grešaka:**
+
+| Kod                   | HTTP | Uzrok                       |
+|-----------------------|------|-----------------------------|
+| `SHIFT_ALREADY_ACTIVE`| 409  | Korisnik već ima aktivnu smenu |
+
+---
+
+### `POST /shifts/end`
+
+Završava aktivnu smenu trenutnog korisnika.
+
+**Kodovi grešaka:**
+
+| Kod               | HTTP | Uzrok                          |
+|-------------------|------|--------------------------------|
+| `NO_ACTIVE_SHIFT` | 404  | Nema aktivne smene             |
+
+---
+
+### `GET /bills/table/:tableId`
+
+**Izvor:** `server/routes/bills.ts` | Zahteva: `requireAuth`
+
+Vraća otvoreni račun za dati sto, ili 404 ako nema.
+
+---
+
+### `GET /bills/:id`
+
+Vraća račun sa svim stavkama.
+
+---
+
+### `POST /bills`
+
+Kreira novi račun za sto. Sto mora biti slobodan, korisnik mora imati aktivnu smenu.
+
+| Polje   | Tip    | Obavezno |
+|---------|--------|----------|
+| tableId | number | da       |
+
+**Kodovi grešaka:**
+
+| Kod                      | HTTP | Uzrok                          |
+|--------------------------|------|--------------------------------|
+| `TABLE_ALREADY_OCCUPIED` | 409  | Sto je zauzet                  |
+| `NO_ACTIVE_SHIFT`        | 403  | Nema aktivne smene             |
+| `TABLE_NOT_FOUND`        | 404  | Sto ne postoji                 |
+
+---
+
+### `POST /bills/:id/items`
+
+Dodaje stavku na račun. Ako proizvod već postoji na računu, povećava količinu.
+
+| Polje     | Tip    | Obavezno | Opis                     |
+|-----------|--------|----------|--------------------------|
+| productId | number | da       | ID proizvoda             |
+| color     | string | ne       | `WHITE` \| `BLACK` (default: WHITE) |
+
+---
+
+### `PUT /bills/:id/items/:itemId`
+
+Menja stavku: `quantity`, `unitPrice`, `discount` (0–100%), `color`.
+
+---
+
+### `DELETE /bills/:id/items/:itemId`
+
+Uklanja stavku sa računa.
+
+---
+
+### `PUT /bills/:id/discount`
+
+Postavlja popust na nivou računa (0–100%).
+
+| Polje           | Tip    |
+|-----------------|--------|
+| discountPercent | number |
+
+---
+
+### `PUT /bills/:id/transfer`
+
+Prebacuje račun na drugi slobodan sto.
+
+| Polje   | Tip    |
+|---------|--------|
+| tableId | number |
+
+---
+
+### `POST /bills/:id/pay`
+
+Naplaćuje račun (Prisma transakcija):
+- `Bill.status = PAID`, `paidAt = now()`
+- Za svaku stavku: `Product.stockQuantity -= qty × normQuantity`
+- Kreira `InventoryLog` (type=`SALE`) za svaku stavku
+- `Shift.totalWhite/Black/Revenue += bill.*Total`
+- `TableUnit.isOccupied = false`
+
+---
+
+### `POST /bills/:id/cancel`
+
+Otkazuje račun. Zalihe se ne menjaju.
+
+| Polje  | Tip    | Obavezno |
+|--------|--------|----------|
+| reason | string | da       |
+
 ---
 
 ## Server Middleware
@@ -475,6 +670,12 @@ Centralni Express error handler — mora biti **poslednji** middleware.
 **Izvor:** `server/middleware/logger.ts:20`
 
 Loguje svaki zahtev u konzolu: `[API] POST 200 /api/v1/auth/login — 45ms`
+
+### `checkActiveShift`
+
+**Izvor:** `server/middleware/checkActiveShift.ts`
+
+Verifikuje da korisnik ima aktivnu smenu. Koristi se na endpointima koji zahtevaju aktivnu smenu pre akcije (npr. kreiranje računa). Baca `AppError` sa kodom `NO_ACTIVE_SHIFT` (403) ako smena nije aktivna.
 
 ---
 
@@ -609,6 +810,67 @@ Default limit: 100. Sortirano silazno po `createdAt`.
 
 ---
 
+### `tableService`
+
+**Izvor:** `server/services/tableService.ts`
+
+```typescript
+export async function getTables(): Promise<TableWithStatus[]>
+export async function getTableById(id: number): Promise<TableUnit>
+export async function createTable(data: CreateTableData): Promise<TableUnit>
+export async function updateTable(id: number, data: Partial<CreateTableData & { active: boolean }>): Promise<TableUnit>
+export async function deleteTable(id: number): Promise<void>
+export async function updateTablePositions(positions: { id: number; positionX: number; positionY: number }[]): Promise<void>
+```
+
+`getTables()` vraća sve aktivne stolove sa računatim `openBillId` i `openBillTotal` iz otvorenih računa.
+
+---
+
+### `shiftService`
+
+**Izvor:** `server/services/shiftService.ts`
+
+```typescript
+export async function getActiveShift(userId: number): Promise<Shift | null>
+export async function startShift(userId: number): Promise<Shift>
+export async function endShift(userId: number): Promise<Shift>
+```
+
+`startShift` baca `SHIFT_ALREADY_ACTIVE` (409) ako postoji aktivna smena.
+`endShift` baca `NO_ACTIVE_SHIFT` (404) ako nema aktivne smene.
+
+---
+
+### `billService`
+
+**Izvor:** `server/services/billService.ts`
+
+```typescript
+export async function getBillById(id: number): Promise<Bill>
+export async function getOpenBillForTable(tableId: number): Promise<Bill | null>
+export async function createBill(tableId: number, userId: number): Promise<Bill>
+export async function addItem(billId: number, productId: number, color?: string): Promise<Bill>
+export async function updateItem(billId: number, itemId: number, data: { quantity?, unitPrice?, discount?, color? }): Promise<Bill>
+export async function removeItem(billId: number, itemId: number): Promise<Bill>
+export async function setDiscount(billId: number, discountPercent: number): Promise<Bill>
+export async function transferTable(billId: number, newTableId: number): Promise<Bill>
+export async function payBill(billId: number): Promise<Bill>
+export async function cancelBill(billId: number, reason: string): Promise<Bill>
+```
+
+Interna funkcija `recalcBillTotals(billId)` se poziva posle svake izmene stavke ili popusta:
+```
+whiteRaw   = Σ (qty × unitPrice × (1 − itemDiscount/100))  [WHITE stavke]
+blackRaw   = Σ isto                                          [BLACK stavke]
+discFactor = 1 − discountPercent / 100
+total      = (whiteRaw + blackRaw) × discFactor
+whiteTotal = whiteRaw × discFactor
+blackTotal = blackRaw × discFactor
+```
+
+---
+
 ## Baza podataka — Modeli
 
 **Šema:** `prisma/schema.prisma` | **Fajl:** `prisma/dev.db`
@@ -622,7 +884,7 @@ Default limit: 100. Sortirano silazno po `createdAt`.
 | `Shift`        | `startedAt`, `endedAt?`, totals              | —                                                  |
 | `TableUnit`    | `zone: String`, `isOccupied: Boolean`        | zone: `INDOOR` \| `OUTDOOR`                        |
 | `Category`     | `nameSr`, `nameEn`, `sortOrder`, `active`    | —                                                  |
-| `Product`      | `price: Float`, `unit: String`, `active`     | unit: `kom` \| `lit` \| `dcl` \| `flaša`           |
+| `Product`      | `price: Float`, `unit: String`, `normQuantity: Float`, `active` | unit: `kom` \| `lit` \| `dcl` \| `flaša` \| `g` |
 | `Bill`         | `status: String`, `whiteTotal`, `blackTotal` | status: `OPEN` \| `PAID` \| `CANCELLED`            |
 | `BillItem`     | `color: String`, `quantity: Int`             | color: `WHITE` \| `BLACK`                          |
 | `InventoryLog` | `type: String`, `changeQty: Float`           | type: `PURCHASE` \| `SALE` \| `ADJUSTMENT` \| `WASTE` |
@@ -711,7 +973,7 @@ Automatski filtrira navigacione stavke prema `user.role`. Stavke su definisane u
 
 **Izvor:** `src/components/Layout/Header.tsx:18`
 
-Sadrži `<LanguageSwitcher>` i dugme za odjavu. `handleLogout()` poziva `logout()` iz `useAuth()` pa redirekuje na `/login`.
+Sadrži `<LanguageSwitcher>`, status aktivne smene (konobar: dugme za završetak smene), i dugme za odjavu. `handleLogout()` poziva `logout()` iz `useAuth()` pa redirekuje na `/login`.
 
 ### `<LanguageSwitcher>`
 
@@ -847,7 +1109,7 @@ Validira formu lokalno pre slanja. Mapira server error kodove na i18n ključeve:
 
 **Izvor:** `src/pages/DashboardPage.tsx:64`
 
-Admin vidi 3 shortcut kartice (Korisnici, Izveštaji, Podešavanja). Konobar vidi samo status smene.
+Prikazuje status aktivne smene sa dugmetom Start/End. Admin vidi shortcut kartice (Korisnici, Izveštaji, Podešavanja). Konobar vidi poruku za pokretanje smene.
 
 ### `<CategoriesPage>` **[ADMIN]**
 
@@ -866,6 +1128,65 @@ Admin vidi 3 shortcut kartice (Korisnici, Izveštaji, Podešavanja). Konobar vid
 - `<DataTable>` sa klijentskim sortiranjem
 - Filter po kategoriji (select) + pretraga (text input) + toggle neaktivnih
 - Kreira/menja u `<Modal>`, deaktivira sa `<ConfirmDialog>`
+
+### `<TablesPage>`
+
+**Izvor:** `src/pages/TablesPage.tsx` | Zahteva: `<ShiftGuard>`
+
+Vizuelni prikaz stolova po zonama (Unutra / Napolju). Svaki sto je kartica koja prikazuje:
+- Naziv stola i zonu
+- Status: slobodan (zelena) / zauzet (žuta)
+- Ukupan iznos otvorenog računa (ako je zauzet)
+
+Klik na slobodan sto → kreira račun (`POST /bills`) + redirect na `/bills/:id`.
+Klik na zauzet sto → redirect na `/bills/:openBillId`.
+
+### `<BillPage>`
+
+**Izvor:** `src/pages/BillPage.tsx`
+
+Split-panel POS ekran za upravljanje računom jednog stola.
+
+**Leva strana (`MenuPanel`):** Kategorije + grid proizvoda. Klik na proizvod → dodaje stavku.
+
+**Desna strana:** Lista stavki sa:
+- `[−] qty [+]` kontrole
+- `%` dugme → modal za popust na tu stavku (0–100%)
+- `[⬜/⬛]` toggle belo/crno
+- `[✕]` brisanje stavke
+- Ukupni iznosi (Belo / Crno / Popust / Ukupno)
+- Dugmad: "Naplati" (zeleno) i "Otkaži račun" (crveno) — uvek vidljiva
+
+**Header akcije:** `%` popust na ceo račun | `↔` prebaci sto
+
+| Modalna komponenta  | Opis                                          |
+|---------------------|-----------------------------------------------|
+| `DiscountModal`     | Unos procenta popusta (koristi se i za stavku i za račun) |
+| `TransferModal`     | Lista slobodnih stolova                       |
+| `CancelModal`       | Obavezna napomena za otkazivanje              |
+| `PayConfirmModal`   | Pregled iznosa pred naplatu                   |
+
+### `<TableLayoutPage>` **[ADMIN]**
+
+**Izvor:** `src/pages/admin/TableLayoutPage.tsx`
+
+Drag-and-drop editor rasporeda stolova. Admin može:
+- Prevlačiti stolove po kanvas površini
+- Kreirati nove stolove (naziv + zona)
+- Menjati i brisati (deaktivirati) stolove
+- Sačuvati pozicije svih stolova odjednom (`PATCH /tables/positions`)
+
+### `<ShiftGuard>`
+
+**Izvor:** `src/components/ShiftGuard.tsx`
+
+```tsx
+<ShiftGuard>
+  <TablesPage />
+</ShiftGuard>
+```
+
+Blokira pristup stranici ako korisnik nema aktivnu smenu. Prikazuje ekran za pokretanje smene sa dugmetom "Počni smenu".
 
 ### `<InventoryPage>` **[ADMIN]**
 
@@ -941,6 +1262,23 @@ Mora biti korišćen unutar `<ToastProvider>`. Baca Error ako nije.
 
 **`ToastType`:** `'success' | 'error' | 'warning' | 'info'`
 
+### `useShift()`
+
+**Izvor:** `src/hooks/useShift.ts`
+
+```typescript
+const { activeShift, isProcessing, startShift, endShift } = useShift()
+```
+
+| Vraća          | Tip              | Opis                                  |
+|----------------|------------------|---------------------------------------|
+| `activeShift`  | `Shift \| null`  | Aktivna smena korisnika               |
+| `isProcessing` | `boolean`        | Start/end smene u toku                |
+| `startShift`   | `() => Promise<void>` | Pokreće smenu                   |
+| `endShift`     | `() => Promise<void>` | Završava smenu                  |
+
+Mora biti korišćen unutar `<ShiftProvider>`. Baca Error ako nije.
+
 ---
 
 ## Kontekst (Context)
@@ -974,6 +1312,23 @@ interface Toast {
 }
 ```
 
+### `ShiftContext`
+
+**Izvor:** `src/context/ShiftContext.tsx`
+
+Čuva stanje aktivne smene za celu aplikaciju. Pruža `ShiftContext` svim potomcima putem `<ShiftProvider>`.
+
+**Inicijalizacija:** `GET /shifts/active` se poziva pri mount-u i osvežava stanje smene.
+
+`startShift()` i `endShift()` pozivaju odgovarajuće API endpointe i ažuriraju lokalni state.
+
+Wrapper u stablu:
+```tsx
+<ShiftProvider>
+  <Routes>...</Routes>
+</ShiftProvider>
+```
+
 ---
 
 ## Tipovi (TypeScript)
@@ -1001,8 +1356,11 @@ type ApiResponse<T>       = ApiSuccess<T> | ApiError
 // Domenska
 interface TableUnit { id, label, zone, positionX, positionY, isOccupied, active }
 interface Category  { id, nameSr, nameEn, sortOrder, active }
-interface Product   { id, categoryId, nameSr, nameEn, price, stockQuantity, unit, active, category? }
+interface Product   { id, categoryId, nameSr, nameEn, price, stockQuantity, unit, normQuantity, active, category? }
 interface Shift     { id, userId, startedAt, endedAt, totalWhite, totalBlack, totalRevenue }
+interface TableWithStatus extends TableUnit { openBillTotal: number; openBillId: number | null }
+interface Bill      { id, tableId, shiftId, userId, status, discountPercent, total, whiteTotal, blackTotal, createdAt, paidAt, tableUnit, user, items }
+interface BillItem  { id, billId, productId, quantity, unitPrice, color, discount, product: { id, nameSr, nameEn, price, unit, normQuantity } }
 interface NavItem   { labelKey, path, icon, roles, divider? }
 ```
 
@@ -1018,7 +1376,7 @@ interface PurchaseItem  { productId: number; quantity: number; note?: string }
 
 // src/api/products.ts
 interface CreateProductPayload {
-  categoryId, nameSr, nameEn, price, stockQuantity, unit
+  categoryId, nameSr, nameEn, price, stockQuantity, unit, normQuantity?
 }
 
 // src/context/ToastContext.tsx
@@ -1200,6 +1558,69 @@ Preferencija se čuva u `localStorage` pod ključem `kafic_language`.
 | `purchase.remove_row`            | Ukloni red                           | Remove row                            |
 | `purchase.current_stock`         | Trenutno: `{{qty}}` `{{unit}}`       | Current: `{{qty}}` `{{unit}}`         |
 | `purchase.select_product`        | Izaberite proizvod...                | Select product...                     |
+| **tables**                             |                                      |                                       |
+| `tables.title`                         | Stolovi                              | Tables                                |
+| `tables.zone_indoor`                   | Unutra                               | Indoor                                |
+| `tables.zone_outdoor`                  | Napolju (terasa)                     | Outdoor (Terrace)                     |
+| `tables.free`                          | Slobodan                             | Free                                  |
+| `tables.occupied`                      | Zauzet                               | Occupied                              |
+| `tables.error`                         | Greška pri učitavanju stolova.       | Error loading tables.                 |
+| `tables.openingBill`                   | Otvaranje računa...                  | Opening bill...                       |
+| `tables.alreadyOccupied`              | Sto je već zauzet                    | Table is already occupied             |
+| **tableLayout**                        |                                      |                                       |
+| `tableLayout.title`                    | Raspored stolova                     | Table Layout                          |
+| `tableLayout.add`                      | Dodaj sto                            | Add Table                             |
+| `tableLayout.save`                     | Sačuvaj raspored                     | Save Layout                           |
+| `tableLayout.error_load`               | Greška pri učitavanju.               | Error loading.                        |
+| `tableLayout.error_save`               | Greška pri čuvanju rasporeda.        | Error saving layout.                  |
+| `tableLayout.success_save`             | Raspored je sačuvan.                 | Layout saved.                         |
+| **shifts**                             |                                      |                                       |
+| `shifts.start`                         | Počni smenu                          | Start Shift                           |
+| `shifts.end`                           | Završi smenu                         | End Shift                             |
+| `shifts.active`                        | Aktivna smena                        | Active Shift                          |
+| `shifts.started_at`                    | Počela u `{{time}}`                  | Started at `{{time}}`                 |
+| `shifts.error_start`                   | Greška pri pokretanju smene.         | Error starting shift.                 |
+| `shifts.error_end`                     | Greška pri završetku smene.          | Error ending shift.                   |
+| `shifts.no_shift`                      | Nema aktivne smene                   | No active shift                       |
+| `shifts.start_prompt`                  | Pokrenite smenu da biste koristili stolove | Start a shift to use tables     |
+| **bills**                              |                                      |                                       |
+| `bills.title`                          | Račun                                | Bill                                  |
+| `bills.loading`                        | Učitavanje računa...                 | Loading bill...                       |
+| `bills.error`                          | Greška pri učitavanju računa.        | Error loading bill.                   |
+| `bills.emptyBill`                      | Dodajte stavke iz menija             | Add items from the menu               |
+| `bills.menu.categories`                | Kategorije                           | Categories                            |
+| `bills.menu.products`                  | Proizvodi                            | Products                              |
+| `bills.menu.noProducts`                | Nema proizvoda                       | No products                           |
+| `bills.totals.white`                   | Belo                                 | White                                 |
+| `bills.totals.black`                   | Crno                                 | Black                                 |
+| `bills.totals.discount`                | Popust                               | Discount                              |
+| `bills.totals.total`                   | Ukupno                               | Total                                 |
+| `bills.status.paid`                    | Plaćeno                              | Paid                                  |
+| `bills.status.cancelled`               | Otkazano                             | Cancelled                             |
+| `bills.actions.discount`               | Popust                               | Discount                              |
+| `bills.actions.transfer`               | Prebaci sto                          | Transfer Table                        |
+| `bills.actions.pay`                    | Naplati                              | Pay                                   |
+| `bills.actions.cancel`                 | Otkaži račun                         | Cancel Bill                           |
+| `bills.discount.title`                 | Popust na račun                      | Bill Discount                         |
+| `bills.discount.success`               | Popust je primenjen                  | Discount applied                      |
+| `bills.itemDiscount.title`             | Popust na stavku: `{{name}}`         | Item Discount: `{{name}}`             |
+| `bills.transfer.title`                 | Prebaci račun na drugi sto           | Transfer Bill to Another Table        |
+| `bills.transfer.subtitle`              | Izaberite slobodan sto               | Select a free table                   |
+| `bills.transfer.noFreeTables`          | Nema slobodnih stolova               | No free tables available              |
+| `bills.transfer.success`               | Račun je prebačen na drugi sto       | Bill transferred to another table     |
+| `bills.pay.title`                      | Naplata                              | Payment                               |
+| `bills.pay.subtitle`                   | Pregled iznosa pre naplate           | Review totals before payment          |
+| `bills.pay.confirm`                    | Potvrdi naplatu                      | Confirm Payment                       |
+| `bills.pay.paying`                     | Plaćanje...                          | Paying...                             |
+| `bills.pay.success`                    | Račun je naplaćen                    | Bill paid successfully                |
+| `bills.cancel.title`                   | Otkazivanje računa                   | Cancel Bill                           |
+| `bills.cancel.subtitle`                | Unesite razlog otkazivanja           | Enter a reason for cancellation       |
+| `bills.cancel.reasonPlaceholder`       | Razlog...                            | Reason...                             |
+| `bills.cancel.confirm`                 | Potvrdi otkazivanje                  | Confirm Cancellation                  |
+| `bills.cancel.success`                 | Račun je otkazan                     | Bill cancelled                        |
+| **products (novi ključevi)**           |                                      |                                       |
+| `products.normQuantity`                | Normativ                             | Norm Quantity                         |
+| `products.normQuantity_hint`           | Količina koja se oduzima iz zaliha pri svakoj prodaji | Amount deducted from stock per sale |
 
 ---
 
