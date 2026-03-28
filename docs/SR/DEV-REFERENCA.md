@@ -40,8 +40,12 @@ Electron Main Process
 │   │   ├── tables.ts        ← /api/v1/tables/*       (Faza 3)
 │   │   ├── shifts.ts        ← /api/v1/shifts/*       (Faza 3, 6.1, 6.2, 6.3)
 │   │   ├── bills.ts         ← /api/v1/bills/*        (Faza 4)
-│   │   ├── settings.ts      ← /api/v1/settings/*     (Faza 5)
-│   │   └── print.ts         ← /api/v1/print/*        (Faza 5)
+│   │   ├── settings.ts      ← /api/v1/settings/*     (Faza 5, 7.3)
+│   │   ├── print.ts         ← /api/v1/print/*        (Faza 5)
+│   │   ├── users.ts         ← /api/v1/users/*        (Faza 7.1)
+│   │   ├── salaries.ts      ← /api/v1/salaries/*     (Faza 7.1)
+│   │   ├── reports.ts       ← /api/v1/reports/*      (Faza 7.2)
+│   │   └── dashboard.ts     ← /api/v1/dashboard      (Faza 7.4)
 │   ├── server/lib/          ← singleton i infrastruktura
 │   │   ├── prisma.ts        ← singleton PrismaClient
 │   │   └── printerService.ts ← ESC/POS formatiranje i slanje       (Faza 5)
@@ -54,7 +58,11 @@ Electron Main Process
 │       ├── tableService.ts    ← CRUD za stolove + isOccupied status  (Faza 3)
 │       ├── shiftService.ts    ← pokretanje/završetak/izveštaj smena   (Faza 3, 6.1–6.3)
 │       ├── billService.ts     ← kreiranje/pregled/zatvaranje računa   (Faza 4)
-│       └── settingsService.ts ← čitanje/čuvanje Setting ključeva      (Faza 5)
+│       ├── settingsService.ts ← čitanje/čuvanje Setting ključeva      (Faza 5, 7.3)
+│       ├── userService.ts     ← CRUD korisnika + deaktivacija         (Faza 7.1)
+│       ├── salaryService.ts   ← evidencija isplata plata              (Faza 7.1)
+│       ├── reportService.ts   ← dnevni/nedeljni/mesečni/custom izveštaji (Faza 7.2)
+│       └── dashboardService.ts ← live statistike za admin dashboard   (Faza 7.4)
 │
 └── prisma/schema.prisma     ← SQLite baza (prisma/dev.db)
 
@@ -81,13 +89,21 @@ Electron Renderer Process (Vite → React)
 │   │                            adjustShiftInventory, endShiftById, getShiftList,
 │   │                            printShiftSummary
 │   ├── bills.ts              ← createBill, fetchBill, payBill...           (Faza 4)
-│   ├── settings.ts           ← fetchPrinterSettings, savePrinterSettings   (Faza 5)
-│   └── print.ts              ← printReceipt, printTestPage                 (Faza 5)
+│   ├── settings.ts           ← fetchPrinterSettings, getSettings, updateSettings (Faza 5, 7.3)
+│   ├── print.ts              ← printReceipt, printTestPage                 (Faza 5)
+│   ├── users.ts              ← getUsers, createUser, updateUser, deactivateUser, reactivateUser (Faza 7.1)
+│   ├── salaries.ts           ← getSalaries, createSalary                  (Faza 7.1)
+│   ├── reports.ts            ← getDailyReport, getWeeklyReport, getMonthlyReport, getCustomReport (Faza 7.2)
+│   └── dashboard.ts          ← getDashboardStats                           (Faza 7.4)
 ├── src/components/
 │   ├── Layout/              ← MainLayout, Sidebar, Header
 │   ├── ProtectedRoute.tsx
 │   ├── ShiftGuard.tsx        ← blokira /tables bez aktivne smene           (Faza 3)
 │   ├── LanguageSwitcher.tsx
+│   ├── reports/             ← deljive komponente za izveštaje (Faza 7.2)
+│   │   ├── ReportSummaryCards.tsx ← 5 kartica prometa
+│   │   ├── TopProductsTable.tsx   ← top 10 artikala tabela
+│   │   └── ComparisonBadge.tsx    ← zeleni/crveni % poređenja
 │   └── ui/                  ← biblioteka za ponovnu upotrebu
 │       ├── Modal.tsx
 │       ├── ConfirmDialog.tsx
@@ -110,7 +126,16 @@ Electron Renderer Process (Vite → React)
         ├── PurchasePage.tsx
         ├── TableLayoutPage.tsx      ← admin editor rasporeda stolova       (Faza 3)
         ├── PrinterSettingsPage.tsx  ← konfiguracija POS štampača          (Faza 5)
-        └── ShiftsHistoryPage.tsx    ← istorija smena sa filterima         (Faza 6.3)
+        ├── ShiftsHistoryPage.tsx    ← istorija smena sa filterima         (Faza 6.3)
+        ├── UsersPage.tsx            ← CRUD korisnika + deaktivacija        (Faza 7.1)
+        ├── SalariesPage.tsx         ← evidencija isplata plata             (Faza 7.1)
+        ├── SettingsPage.tsx         ← podešavanja kafića                   (Faza 7.3)
+        ├── AdminDashboardPage.tsx   ← dashboard sa karticama i grafikonima (Faza 7.4)
+        └── reports/
+            ├── DailyReportPage.tsx   ← dnevni izveštaj sa date pickerom   (Faza 7.2)
+            ├── WeeklyReportPage.tsx  ← nedeljni izveštaj + BarChart        (Faza 7.2)
+            ├── MonthlyReportPage.tsx ← mesečni izveštaj + LineChart + Pie  (Faza 7.2)
+            └── CustomReportPage.tsx  ← izveštaj za proizvoljni period      (Faza 7.2)
 ```
 
 **Tok podataka / Data flow:**
@@ -846,6 +871,240 @@ Vraća sva podešavanja štampača i kafea iz `Setting` tabele.
 **Izvor:** `server/routes/print.ts` | Zahteva: `requireAuth`
 
 Štampa testnu stranicu za proveru konekcije. Isti format greške kao `/print/receipt`.
+
+---
+
+### `GET /settings` (Faza 7.3)
+
+**Izvor:** `server/routes/settings.ts` | Zahteva: `requireAuth`
+
+Vraća sva podešavanja kafića i štampača kao `{ key: value }` objekat.
+
+**Uspešan odgovor `200`:**
+```json
+{
+  "cafe_name": "Kafić Pasaz",
+  "cafe_address": "Ulica 1, Beograd",
+  "cafe_pib": "123456789",
+  "cafe_phone": "011/123-456",
+  "min_stock_threshold": "5",
+  "currency": "RSD"
+}
+```
+
+---
+
+### `PUT /settings` **[ADMIN]** (Faza 7.3)
+
+**Izvor:** `server/routes/settings.ts` | Zahteva: `requireAuth`, `requireAdmin`
+
+Bulk update podešavanja kafića.
+
+**Telo zahteva:**
+```json
+{
+  "settings": {
+    "cafe_name": "Kafić Pasaz",
+    "cafe_address": "Ulica 1, Beograd",
+    "min_stock_threshold": "5",
+    "currency": "RSD"
+  }
+}
+```
+
+---
+
+### `GET /users` **[ADMIN]** (Faza 7.1)
+
+**Izvor:** `server/routes/users.ts` | Zahteva: `requireAuth`, `requireAdmin`
+
+Vraća listu svih korisnika (bez lozinke).
+
+**Uspešan odgovor `200`:**
+```json
+[
+  {
+    "id": 1, "fullName": "Administrator", "username": "admin",
+    "role": "ADMIN", "active": true, "createdAt": "2026-01-01T00:00:00.000Z"
+  }
+]
+```
+
+---
+
+### `GET /users/:id` **[ADMIN]** (Faza 7.1)
+
+Vraća jednog korisnika po ID-u.
+
+---
+
+### `POST /users` **[ADMIN]** (Faza 7.1)
+
+Kreira novi korisnički nalog.
+
+| Polje    | Tip    | Obavezno | Validacija                    |
+|----------|--------|----------|-------------------------------|
+| fullName | string | da       | Neprazan                      |
+| username | string | da       | Jedinstven u bazi             |
+| password | string | da       | Min 6 karaktera               |
+| role     | string | da       | `"ADMIN"` \| `"WAITER"`      |
+
+**Kodovi grešaka:**
+
+| Kod                  | HTTP | Uzrok                        |
+|----------------------|------|------------------------------|
+| `USERNAME_TAKEN`     | 409  | Username već postoji         |
+| `INVALID_ROLE`       | 422  | Rola nije ADMIN niti WAITER  |
+| `PASSWORD_TOO_SHORT` | 422  | Lozinka kraća od 6 karaktera |
+
+---
+
+### `PUT /users/:id` **[ADMIN]** (Faza 7.1)
+
+Menja ime, username ili lozinku korisnika. Sva polja su opciona.
+
+| Polje    | Tip    | Obavezno | Opis                                        |
+|----------|--------|----------|---------------------------------------------|
+| fullName | string | ne       | Novo ime                                    |
+| username | string | ne       | Novi username (jedinstven)                  |
+| password | string | ne       | Nova lozinka (min 6 kar.) — hashuje se       |
+
+---
+
+### `DELETE /users/:id` **[ADMIN]** (Faza 7.1)
+
+Deaktivira korisnika (soft delete: `active = false`). Ne briše iz baze.
+
+**Kodovi grešaka:**
+
+| Kod                 | HTTP | Uzrok                                   |
+|---------------------|------|-----------------------------------------|
+| `SELF_DEACTIVATION` | 403  | Admin pokušava da deaktivira sopstveni nalog |
+| `USER_HAS_ACTIVE_SHIFT` | 409 | Korisnik ima aktivnu smenu             |
+
+---
+
+### `PUT /users/:id/reactivate` **[ADMIN]** (Faza 7.1)
+
+Reaktivira deaktiviranog korisnika (`active = true`).
+
+---
+
+### `GET /salaries` **[ADMIN]** (Faza 7.1)
+
+**Izvor:** `server/routes/salaries.ts` | Zahteva: `requireAuth`, `requireAdmin`
+
+Lista isplata plata sa filterima.
+
+| Query param | Tip    | Opis                       |
+|-------------|--------|----------------------------|
+| userId      | number | Filter po korisniku        |
+| dateFrom    | string | Od datuma (`YYYY-MM-DD`)   |
+| dateTo      | string | Do datuma (`YYYY-MM-DD`)   |
+
+**Uspešan odgovor `200`:**
+```json
+[
+  {
+    "id": 1, "userId": 2, "amount": 50000, "note": "Plata za mart",
+    "paidAt": "2026-03-28T10:00:00.000Z", "paidById": 1,
+    "user": { "id": 2, "fullName": "Marko Konobar", "username": "marko" },
+    "paidBy": { "id": 1, "fullName": "Administrator", "username": "admin" }
+  }
+]
+```
+
+---
+
+### `POST /salaries` **[ADMIN]** (Faza 7.1)
+
+Evidentira isplatu plate.
+
+| Polje  | Tip    | Obavezno | Validacija    |
+|--------|--------|----------|---------------|
+| userId | number | da       | Mora postojati|
+| amount | number | da       | Mora biti > 0 |
+| note   | string | ne       | Komentar      |
+| paidAt | string | ne       | ISO datum, default: sada |
+
+---
+
+### `GET /reports/daily` **[ADMIN]** (Faza 7.2)
+
+**Izvor:** `server/routes/reports.ts` | Zahteva: `requireAuth`, `requireAdmin`
+
+| Query param | Tip    | Default | Opis                    |
+|-------------|--------|---------|-------------------------|
+| date        | string | danas   | Format `YYYY-MM-DD`     |
+
+**Uspešan odgovor `200`:**
+```json
+{
+  "summary": { "total": 15000, "white": 9000, "black": 6000, "billCount": 12, "avgBill": 1250 },
+  "topProducts": [{ "productId": 1, "nameSr": "Espresso", "nameEn": "Espresso", "quantity": 45, "amount": 6750 }],
+  "revenueByDay": [{ "date": "2026-03-28", "total": 15000, "white": 9000, "black": 6000 }],
+  "revenueByWaiter": [{ "userId": 2, "fullName": "Marko", "shiftStart": "...", "shiftEnd": "...", "total": 15000, "white": 9000, "black": 6000, "billCount": 12 }],
+  "categoryBreakdown": [{ "categoryId": 1, "nameSr": "Kafa", "nameEn": "Coffee", "total": 8000 }],
+  "comparison": { "previousTotal": 13000, "changePercent": 15.38 }
+}
+```
+
+---
+
+### `GET /reports/weekly` **[ADMIN]** (Faza 7.2)
+
+| Query param | Tip    | Default         | Opis                         |
+|-------------|--------|-----------------|------------------------------|
+| weekStart   | string | trenutni pon.   | Format `YYYY-MM-DD` (ponedeljak) |
+
+Isti format odgovora kao `/reports/daily`. `revenueByDay` sadrži 7 unosa (pon–ned).
+
+---
+
+### `GET /reports/monthly` **[ADMIN]** (Faza 7.2)
+
+| Query param | Tip    | Default        | Opis               |
+|-------------|--------|----------------|--------------------|
+| month       | string | trenutni mesec | Format `YYYY-MM`   |
+
+`revenueByDay` sadrži unos za svaki dan u mesecu (uključujući dane bez prometa).
+
+---
+
+### `GET /reports/custom` **[ADMIN]** (Faza 7.2)
+
+| Query param | Tip    | Obavezno | Opis                  |
+|-------------|--------|----------|-----------------------|
+| dateFrom    | string | da       | Format `YYYY-MM-DD`   |
+| dateTo      | string | da       | Format `YYYY-MM-DD`   |
+
+---
+
+### `GET /dashboard` **[ADMIN]** (Faza 7.4)
+
+**Izvor:** `server/routes/dashboard.ts` | Zahteva: `requireAuth`, `requireAdmin`
+
+Vraća live statistike za admin dashboard. Sve Prisma upite izvršava paralelno (`Promise.all`).
+
+**Uspešan odgovor `200`:**
+```json
+{
+  "today": { "revenue": 15000, "revenueYesterday": 13000, "changePercent": 15.38, "billCount": 12, "avgBill": 1250 },
+  "monthToDate": { "revenue": 180000 },
+  "last7Days": [
+    { "date": "2026-03-22", "total": 12000, "white": 7000, "black": 5000 }
+  ],
+  "topProducts": [
+    { "nameSr": "Espresso", "nameEn": "Espresso", "quantity": 45 }
+  ],
+  "whiteBlackRatio": { "white": 120000, "black": 60000 },
+  "categoryBreakdown": [
+    { "nameSr": "Kafa", "nameEn": "Coffee", "total": 95000 }
+  ]
+}
+```
+
+**Napomena:** `last7Days` uvek vraća tačno 7 unosa, uključujući dane sa nultim prometom.
 
 ---
 
@@ -2076,6 +2335,68 @@ Preferencija se čuva u `localStorage` pod ključem `kafic_language`.
 | `shifts.history.active_badge`          | Aktivna                              | Active                                |
 | `shifts.history.detail_title`          | Detalji smene                        | Shift Details                         |
 | `shifts.history.btn_filter`            | Primeni filter                       | Apply filter                          |
+| **users** (Faza 7.1)                   |                                      |                                       |
+| `users.title`                          | Korisnici                            | Users                                 |
+| `users.newUser`                        | Novi korisnik                        | New User                              |
+| `users.table.fullName`                 | Ime i prezime                        | Full Name                             |
+| `users.table.username`                 | Korisničko ime                       | Username                              |
+| `users.table.role`                     | Rola                                 | Role                                  |
+| `users.table.status`                   | Status                               | Status                                |
+| `users.status.active`                  | Aktivan                              | Active                                |
+| `users.status.inactive`                | Neaktivan                            | Inactive                              |
+| `users.roles.ADMIN`                    | Administrator                        | Administrator                         |
+| `users.roles.WAITER`                   | Konobar                              | Waiter                                |
+| `users.actions.deactivate`             | Deaktiviraj                          | Deactivate                            |
+| `users.actions.reactivate`             | Reaktiviraj                          | Reactivate                            |
+| `users.messages.created`               | Korisnik uspešno kreiran             | User created successfully             |
+| `users.messages.deactivated`           | Korisnik deaktiviran                 | User deactivated                      |
+| **salaries** (Faza 7.1)                |                                      |                                       |
+| `salaries.title`                       | Plate                                | Salaries                              |
+| `salaries.paySalary`                   | Isplati platu                        | Pay Salary                            |
+| `salaries.totalPaid`                   | Ukupno isplaćeno                     | Total Paid                            |
+| `salaries.lastPayment`                 | Poslednja isplata                    | Last Payment                          |
+| `salaries.table.waiter`                | Konobar                              | Waiter                                |
+| `salaries.table.amount`                | Iznos                                | Amount                                |
+| `salaries.table.paidBy`                | Isplatio                             | Paid By                               |
+| `salaries.messages.created`            | Plata uspešno isplaćena              | Salary paid successfully              |
+| **reports** (Faza 7.2)                 |                                      |                                       |
+| `reports.daily.title`                  | Dnevni izveštaj                      | Daily Report                          |
+| `reports.weekly.title`                 | Nedeljni izveštaj                    | Weekly Report                         |
+| `reports.monthly.title`                | Mesečni izveštaj                     | Monthly Report                        |
+| `reports.custom.title`                 | Prilagođeni period                   | Custom Period                         |
+| `reports.custom.generate`              | Generiši izveštaj                    | Generate Report                       |
+| `reports.summary.total`                | Ukupan promet                        | Total Revenue                         |
+| `reports.summary.white`                | Belo                                 | White                                 |
+| `reports.summary.black`                | Crno                                 | Black                                 |
+| `reports.summary.billCount`            | Broj računa                          | Bill Count                            |
+| `reports.summary.avgBill`              | Prosečan račun                       | Average Bill                          |
+| `reports.topProducts.title`            | Top 10 artikala                      | Top 10 Products                       |
+| `reports.comparison.vs`                | u odnosu na prethodni period         | vs previous period                    |
+| `reports.noData`                       | Nema podataka za izabrani period     | No data for selected period           |
+| **export** (Faza 7.3)                  |                                      |                                       |
+| `export.pdf`                           | Export PDF                           | Export PDF                            |
+| `export.excel`                         | Export Excel                         | Export Excel                          |
+| `export.generatedAt`                   | Generisano                           | Generated                             |
+| **settings** (Faza 7.3)               |                                      |                                       |
+| `settings.title`                       | Podešavanja kafića                   | Café Settings                         |
+| `settings.cafeName`                    | Naziv kafića                         | Café Name                             |
+| `settings.cafeAddress`                 | Adresa                               | Address                               |
+| `settings.cafePib`                     | PIB                                  | Tax ID                                |
+| `settings.cafePhone`                   | Telefon                              | Phone                                 |
+| `settings.minStockThreshold`           | Minimalan prag zaliha                | Minimum Stock Threshold               |
+| `settings.currency`                    | Valuta                               | Currency                              |
+| `settings.saved`                       | Podešavanja sačuvana                 | Settings saved                        |
+| **adminDashboard** (Faza 7.4)          |                                      |                                       |
+| `adminDashboard.title`                 | Admin Dashboard                      | Admin Dashboard                       |
+| `adminDashboard.todayRevenue`          | Današnji promet                      | Today's Revenue                       |
+| `adminDashboard.monthRevenue`          | Mesečni promet                       | Monthly Revenue                       |
+| `adminDashboard.todayBills`            | Računa danas                         | Bills Today                           |
+| `adminDashboard.avgBill`               | Prosečan račun                       | Average Bill                          |
+| `adminDashboard.vsYesterday`           | vs juče                              | vs yesterday                          |
+| `adminDashboard.last7Days`             | Promet poslednjih 7 dana             | Revenue Last 7 Days                   |
+| `adminDashboard.topProducts`           | Top 5 artikala (nedelja)             | Top 5 Products (week)                 |
+| `adminDashboard.whiteBlack`            | Belo / Crno (mesec)                  | White / Black (month)                 |
+| `adminDashboard.byCategory`            | Promet po kategorijama (mesec)       | Revenue by Category (month)           |
 
 ---
 

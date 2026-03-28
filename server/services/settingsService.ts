@@ -9,6 +9,8 @@
  * Grupe podešavanja / Setting groups:
  * - printer_*:  Konfiguracija POS štampača / POS printer configuration
  * - cafe_*:     Informacije o kafeu za račune / Cafe info for receipts
+ * - min_stock_threshold: Minimalan prag zaliha / Minimum stock threshold
+ * - currency:   Valuta / Currency
  */
 
 import { prisma } from '../lib/prisma'
@@ -118,4 +120,65 @@ export async function savePrinterSettings(data: Partial<PrinterSettings>): Promi
   )
 
   return getPrinterSettings()
+}
+
+// ─── Generičke operacije / Generic operations ─────────────────────────────────
+
+/**
+ * Vraća sva podešavanja kao objekt {ključ: vrednost}.
+ * Returns all settings as a {key: value} object.
+ *
+ * @returns {Promise<Record<string, string>>} Sva podešavanja / All settings
+ */
+export async function getAllSettings(): Promise<Record<string, string>> {
+  const rows = await prisma.setting.findMany()
+  return Object.fromEntries(rows.map(r => [r.key, r.value]))
+}
+
+/**
+ * Vraća vrednost jednog podešavanja po ključu.
+ * Returns the value of a single setting by key.
+ *
+ * @param {string} key - Ključ podešavanja / Setting key
+ * @returns {Promise<string | null>} Vrednost ili null / Value or null
+ */
+export async function getSetting(key: string): Promise<string | null> {
+  const row = await prisma.setting.findUnique({ where: { key } })
+  return row?.value ?? null
+}
+
+/**
+ * Upsertuje jedno podešavanje.
+ * Upserts a single setting.
+ *
+ * @param {string} key   - Ključ / Key
+ * @param {string} value - Vrednost / Value
+ */
+export async function upsertSetting(key: string, value: string): Promise<void> {
+  await prisma.setting.upsert({
+    where:  { key },
+    update: { value },
+    create: { key, value },
+  })
+}
+
+/**
+ * Bulk upsert više podešavanja odjednom.
+ * Bulk upsert multiple settings at once.
+ *
+ * @param {Record<string, string>} settings - Podešavanja za čuvanje / Settings to save
+ */
+export async function bulkUpsert(settings: Record<string, string>): Promise<void> {
+  const entries = Object.entries(settings)
+  if (entries.length === 0) return
+
+  await prisma.$transaction(
+    entries.map(([key, value]) =>
+      prisma.setting.upsert({
+        where:  { key },
+        update: { value },
+        create: { key, value },
+      })
+    )
+  )
 }

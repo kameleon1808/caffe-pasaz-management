@@ -28,6 +28,10 @@ import { shiftsRouter }     from './routes/shifts'
 import { billsRouter }      from './routes/bills'
 import { settingsRouter }   from './routes/settings'
 import { printRouter }      from './routes/print'
+import { usersRouter }     from './routes/users'
+import { salariesRouter }  from './routes/salaries'
+import { reportsRouter }    from './routes/reports'
+import { dashboardRouter } from './routes/dashboard'
 
 // Učitaj .env fajl / Load .env file
 config({ path: resolve(process.cwd(), '.env') })
@@ -101,6 +105,18 @@ function createApp(): Application {
 
   // Štampanje / Printing
   app.use('/api/v1/print', printRouter)
+
+  // Korisnici / Users
+  app.use('/api/v1/users', usersRouter)
+
+  // Plate / Salaries
+  app.use('/api/v1/salaries', salariesRouter)
+
+  // Izveštaji / Reports
+  app.use('/api/v1/reports', reportsRouter)
+
+  // Admin dashboard statistike / Admin dashboard statistics
+  app.use('/api/v1/dashboard', dashboardRouter)
 
   // ── Error Handler (mora biti poslednji!) ──────────────────────────────────
   // Error Handler (must be last!)

@@ -4,15 +4,63 @@
  *              API routes for managing system settings.
  *
  * Rute / Routes:
+ * - GET  /api/v1/settings          → Vraća sva podešavanja / Returns all settings
+ * - PUT  /api/v1/settings          → Bulk update podešavanja (Admin) / Bulk update settings (Admin)
  * - GET  /api/v1/settings/printer  → Vraća podešavanja štampača / Returns printer settings
  * - PUT  /api/v1/settings/printer  → Čuva podešavanja štampača (Admin) / Saves printer settings (Admin)
  */
 
-import { Router } from 'express'
+import { Router, Request, Response, NextFunction } from 'express'
 import { requireAuth, requireAdmin } from '../middleware/auth'
-import { getPrinterSettings, savePrinterSettings } from '../services/settingsService'
+import {
+  getPrinterSettings, savePrinterSettings,
+  getAllSettings, bulkUpsert
+} from '../services/settingsService'
 
 export const settingsRouter = Router()
+
+// ─── GET /settings ──────────────────────────────────────────────────────────
+
+/**
+ * Vraća sva podešavanja kao {key: value} objekt.
+ * Returns all settings as a {key: value} object.
+ *
+ * @route   GET /api/v1/settings
+ * @access  Protected (svi ulogovani korisnici / all logged-in users)
+ */
+settingsRouter.get('/', requireAuth, async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const settings = await getAllSettings()
+    res.json({ success: true, data: settings })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// ─── PUT /settings ──────────────────────────────────────────────────────────
+
+/**
+ * Bulk update podešavanja (samo admin).
+ * Bulk update settings (admin only).
+ *
+ * @route   PUT /api/v1/settings
+ * @access  Admin only
+ * @body    {{ settings: Record<string, string> }} Podešavanja za čuvanje / Settings to save
+ */
+settingsRouter.put('/', requireAuth, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { settings } = req.body as { settings?: Record<string, string> }
+    if (!settings || typeof settings !== 'object') {
+      res.status(400).json({ error: 'settings objekat je obavezan / settings object is required' })
+      return
+    }
+    await bulkUpsert(settings)
+    const updated = await getAllSettings()
+    res.json({ success: true, data: updated })
+  } catch (err) {
+    next(err)
+  }
+})
 
 // ─── GET /settings/printer ─────────────────────────────────────────────────
 

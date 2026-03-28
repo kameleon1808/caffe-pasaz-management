@@ -48,6 +48,18 @@ import { BillPage }        from './pages/BillPage'
 import { ShiftSummaryPage }   from './pages/ShiftSummaryPage'
 import { ShiftsHistoryPage }  from './pages/admin/ShiftsHistoryPage'
 
+// Admin stranice — Faza 7 / Admin pages — Phase 7
+import { AdminDashboardPage } from './pages/admin/AdminDashboardPage'
+import { UsersPage }    from './pages/admin/UsersPage'
+import { SalariesPage } from './pages/admin/SalariesPage'
+import { SettingsPage } from './pages/admin/SettingsPage'
+
+// Izveštaji — Faza 7.2 / Reports — Phase 7.2
+import { DailyReportPage }   from './pages/admin/reports/DailyReportPage'
+import { WeeklyReportPage }  from './pages/admin/reports/WeeklyReportPage'
+import { MonthlyReportPage } from './pages/admin/reports/MonthlyReportPage'
+import { CustomReportPage }  from './pages/admin/reports/CustomReportPage'
+
 // Placeholder stranice za buduće faze / Placeholder pages for future phases
 import { PlaceholderPage } from './pages/PlaceholderPage'
 
@@ -136,6 +148,18 @@ function App() {
             }
           />
 
+          {/* Admin dashboard — Faza 7.4 / Admin dashboard — Phase 7.4 */}
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <MainLayout>
+                  <AdminDashboardPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+
           {/* Istorija smena — admin / Shift history — admin (Faza 6.3) */}
           <Route
             path="/admin/shifts"
@@ -200,7 +224,29 @@ function App() {
             element={
               <ProtectedRoute roles={['ADMIN']}>
                 <MainLayout>
-                  <PlaceholderPage titleKey="nav.users" icon="👥" />
+                  <UsersPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <MainLayout>
+                  <UsersPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/salaries"
+            element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <MainLayout>
+                  <SalariesPage />
                 </MainLayout>
               </ProtectedRoute>
             }
@@ -211,7 +257,51 @@ function App() {
             element={
               <ProtectedRoute roles={['ADMIN']}>
                 <MainLayout>
-                  <PlaceholderPage titleKey="nav.reports" icon="📊" />
+                  <DailyReportPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/reports/daily"
+            element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <MainLayout>
+                  <DailyReportPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/reports/weekly"
+            element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <MainLayout>
+                  <WeeklyReportPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/reports/monthly"
+            element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <MainLayout>
+                  <MonthlyReportPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/reports/custom"
+            element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <MainLayout>
+                  <CustomReportPage />
                 </MainLayout>
               </ProtectedRoute>
             }
@@ -222,7 +312,19 @@ function App() {
             element={
               <ProtectedRoute roles={['ADMIN']}>
                 <MainLayout>
-                  <PlaceholderPage titleKey="nav.settings" icon="⚙️" />
+                  <SettingsPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Podešavanja kafića — Faza 7.3 / Cafe settings — Phase 7.3 */}
+          <Route
+            path="/admin/settings"
+            element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <MainLayout>
+                  <SettingsPage />
                 </MainLayout>
               </ProtectedRoute>
             }

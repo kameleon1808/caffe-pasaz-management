@@ -79,7 +79,21 @@
     "admin_settings_title": "Podešavanja",
     "admin_settings_desc": "Sistemska podešavanja kafića",
     "admin_printer_title": "Štampač",
-    "admin_printer_desc": "Konfiguracija POS termalnog štampača"
+    "admin_printer_desc": "Konfiguracija POS termalnog štampača",
+    "admin_users_manage_title": "Korisnici",
+    "admin_users_manage_desc": "Upravljanje nalozima i rolama korisnika",
+    "admin_salaries_title": "Plate",
+    "admin_salaries_desc": "Pregled i isplata plata konobarima",
+    "admin_reports_daily_title": "Dnevni izveštaj",
+    "admin_reports_daily_desc": "Prihod i prodaja za izabrani dan",
+    "admin_reports_weekly_title": "Nedeljni izveštaj",
+    "admin_reports_weekly_desc": "Prihod i prodaja za izabranu nedelju",
+    "admin_reports_monthly_title": "Mesečni izveštaj",
+    "admin_reports_monthly_desc": "Prihod i prodaja za izabrani mesec",
+    "admin_reports_custom_title": "Prilagođeni izveštaj",
+    "admin_reports_custom_desc": "Izveštaj za bilo koji vremenski period",
+    "admin_dashboard_title": "Admin Dashboard",
+    "admin_dashboard_desc": "Statistike i grafikoni za menadžment"
   },
 
   "roles": {
@@ -388,6 +402,184 @@
     "section_cafe": "Podaci o kafeu (za zaglavlje računa)"
   },
 
+  "users": {
+    "title": "Korisnici",
+    "newUser": "Novi korisnik",
+    "table": {
+      "fullName": "Ime i prezime",
+      "username": "Korisničko ime",
+      "role": "Rola",
+      "status": "Status",
+      "createdAt": "Datum kreiranja",
+      "actions": "Akcije"
+    },
+    "status": {
+      "active": "Aktivan",
+      "inactive": "Neaktivan"
+    },
+    "roles": {
+      "ADMIN": "Administrator",
+      "WAITER": "Konobar"
+    },
+    "form": {
+      "fullName": "Ime i prezime",
+      "username": "Korisničko ime",
+      "password": "Lozinka",
+      "newPassword": "Nova lozinka (opciono)",
+      "role": "Rola",
+      "leaveBlank": "Ostavite prazno ako ne menjate lozinku"
+    },
+    "actions": {
+      "edit": "Izmeni",
+      "deactivate": "Deaktiviraj",
+      "reactivate": "Reaktiviraj",
+      "create": "Kreiraj",
+      "save": "Sačuvaj"
+    },
+    "confirm": {
+      "deactivate": "Da li ste sigurni da želite da deaktivirate ovog korisnika?",
+      "deactivateTitle": "Deaktivacija korisnika"
+    },
+    "messages": {
+      "created": "Korisnik uspešno kreiran",
+      "updated": "Korisnik uspešno ažuriran",
+      "deactivated": "Korisnik deaktiviran",
+      "reactivated": "Korisnik reaktiviran",
+      "createError": "Greška pri kreiranju korisnika",
+      "updateError": "Greška pri ažuriranju korisnika",
+      "deactivateError": "Greška pri deaktivaciji korisnika",
+      "reactivateError": "Greška pri reaktivaciji korisnika"
+    },
+    "validation": {
+      "fullNameRequired": "Ime je obavezno",
+      "usernameRequired": "Korisničko ime je obavezno",
+      "passwordRequired": "Lozinka je obavezna",
+      "passwordMin": "Lozinka mora imati najmanje 6 karaktera",
+      "roleRequired": "Rola je obavezna"
+    }
+  },
+
+  "salaries": {
+    "title": "Plate",
+    "paySalary": "Isplati platu",
+    "totalPaid": "Ukupno isplaćeno",
+    "lastPayment": "Poslednja isplata",
+    "noPayments": "Nema isplata",
+    "filters": {
+      "allWaiters": "Svi konobari",
+      "waiter": "Konobar",
+      "dateFrom": "Od datuma",
+      "dateTo": "Do datuma"
+    },
+    "table": {
+      "waiter": "Konobar",
+      "amount": "Iznos",
+      "date": "Datum",
+      "note": "Napomena",
+      "paidBy": "Isplatio"
+    },
+    "form": {
+      "waiter": "Konobar",
+      "amount": "Iznos (RSD)",
+      "note": "Napomena",
+      "paidAt": "Datum isplate",
+      "selectWaiter": "Izaberite konobara"
+    },
+    "messages": {
+      "created": "Plata uspešno isplaćena",
+      "createError": "Greška pri isplati plate"
+    },
+    "validation": {
+      "waiterRequired": "Konobar je obavezan",
+      "amountRequired": "Iznos je obavezan",
+      "amountPositive": "Iznos mora biti veći od 0"
+    }
+  },
+
+  "reports": {
+    "title": "Izveštaji",
+    "noData": "Nema podataka za izabrani period",
+    "daily": {
+      "title": "Dnevni izveštaj",
+      "selectDate": "Izaberite datum",
+      "revenueByWaiter": "Promet po konobaru",
+      "shift": "Smena",
+      "shiftFrom": "Od",
+      "shiftTo": "Do"
+    },
+    "weekly": {
+      "title": "Nedeljni izveštaj",
+      "selectWeek": "Izaberite nedelju",
+      "revenueByDay": "Promet po danima"
+    },
+    "monthly": {
+      "title": "Mesečni izveštaj",
+      "selectMonth": "Izaberite mesec",
+      "revenueByDay": "Promet po danima",
+      "byCategory": "Potrošnja po kategorijama"
+    },
+    "custom": {
+      "title": "Prilagođeni period",
+      "dateFrom": "Od datuma",
+      "dateTo": "Do datuma",
+      "generate": "Generiši izveštaj",
+      "byCategory": "Potrošnja po kategorijama"
+    },
+    "summary": {
+      "total": "Ukupan promet",
+      "white": "Belo",
+      "black": "Crno",
+      "billCount": "Broj računa",
+      "avgBill": "Prosečan račun"
+    },
+    "topProducts": {
+      "title": "Top 10 artikala",
+      "product": "Artikal",
+      "quantity": "Količina",
+      "amount": "Iznos"
+    },
+    "comparison": {
+      "vs": "u odnosu na prethodni period",
+      "noData": "Nema podataka za poređenje"
+    },
+    "category": {
+      "name": "Kategorija",
+      "total": "Iznos"
+    },
+    "waiter": {
+      "name": "Konobar",
+      "shiftPeriod": "Period smene",
+      "total": "Promet",
+      "white": "Belo",
+      "black": "Crno",
+      "billCount": "Računa"
+    }
+  },
+
+  "settings": {
+    "title": "Podešavanja kafića",
+    "cafeName": "Naziv kafića",
+    "cafeAddress": "Adresa",
+    "cafePib": "PIB",
+    "cafePhone": "Telefon",
+    "minStockThreshold": "Minimalan prag zaliha",
+    "currency": "Valuta",
+    "save": "Sačuvaj podešavanja",
+    "saved": "Podešavanja sačuvana",
+    "saveError": "Greška pri čuvanju podešavanja"
+  },
+
+  "export": {
+    "pdf": "Export PDF",
+    "excel": "Export Excel",
+    "generating": "Generisanje...",
+    "generatedAt": "Generisano",
+    "summary": "Promet",
+    "sales": "Prodaja",
+    "waiters": "Konobari",
+    "categories": "Kategorije"
+  },
+
   "shifts": {
     "title": "Smene",
     "start": "Započni smenu",
@@ -503,6 +695,33 @@
         "error_note": "Napomena je obavezna",
         "adjust_success": "Korekcija uspešno primenjena"
       }
+    }
+  },
+
+  "adminDashboard": {
+    "title": "Admin Dashboard",
+    "todayRevenue": "Današnji promet",
+    "monthRevenue": "Mesečni promet",
+    "todayBills": "Računa danas",
+    "avgBill": "Prosečan račun",
+    "vsYesterday": "vs juče",
+    "last7Days": "Promet poslednjih 7 dana",
+    "topProducts": "Top 5 artikala (nedelja)",
+    "whiteBlack": "Belo / Crno (mesec)",
+    "byCategory": "Promet po kategorijama (mesec)",
+    "loadError": "Greška pri učitavanju dashboard podataka",
+    "noData": "Nema podataka",
+    "white": "Belo",
+    "black": "Crno",
+    "quantity": "Količina",
+    "days": {
+      "Mon": "Pon",
+      "Tue": "Uto",
+      "Wed": "Sre",
+      "Thu": "Čet",
+      "Fri": "Pet",
+      "Sat": "Sub",
+      "Sun": "Ned"
     }
   }
 }

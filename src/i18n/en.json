@@ -79,7 +79,21 @@
     "admin_settings_title": "Settings",
     "admin_settings_desc": "System settings for the cafe",
     "admin_printer_title": "Printer",
-    "admin_printer_desc": "POS thermal printer configuration"
+    "admin_printer_desc": "POS thermal printer configuration",
+    "admin_users_manage_title": "Users",
+    "admin_users_manage_desc": "Manage user accounts and roles",
+    "admin_salaries_title": "Salaries",
+    "admin_salaries_desc": "View and pay waiter salaries",
+    "admin_reports_daily_title": "Daily Report",
+    "admin_reports_daily_desc": "Revenue and sales for the selected day",
+    "admin_reports_weekly_title": "Weekly Report",
+    "admin_reports_weekly_desc": "Revenue and sales for the selected week",
+    "admin_reports_monthly_title": "Monthly Report",
+    "admin_reports_monthly_desc": "Revenue and sales for the selected month",
+    "admin_reports_custom_title": "Custom Report",
+    "admin_reports_custom_desc": "Report for any date range",
+    "admin_dashboard_title": "Admin Dashboard",
+    "admin_dashboard_desc": "Statistics and charts for management"
   },
 
   "roles": {
@@ -388,6 +402,184 @@
     "section_cafe": "Cafe Info (for receipt header)"
   },
 
+  "users": {
+    "title": "Users",
+    "newUser": "New User",
+    "table": {
+      "fullName": "Full Name",
+      "username": "Username",
+      "role": "Role",
+      "status": "Status",
+      "createdAt": "Created At",
+      "actions": "Actions"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "roles": {
+      "ADMIN": "Administrator",
+      "WAITER": "Waiter"
+    },
+    "form": {
+      "fullName": "Full Name",
+      "username": "Username",
+      "password": "Password",
+      "newPassword": "New Password (optional)",
+      "role": "Role",
+      "leaveBlank": "Leave blank if you do not want to change the password"
+    },
+    "actions": {
+      "edit": "Edit",
+      "deactivate": "Deactivate",
+      "reactivate": "Reactivate",
+      "create": "Create",
+      "save": "Save"
+    },
+    "confirm": {
+      "deactivate": "Are you sure you want to deactivate this user?",
+      "deactivateTitle": "Deactivate User"
+    },
+    "messages": {
+      "created": "User created successfully",
+      "updated": "User updated successfully",
+      "deactivated": "User deactivated",
+      "reactivated": "User reactivated",
+      "createError": "Error creating user",
+      "updateError": "Error updating user",
+      "deactivateError": "Error deactivating user",
+      "reactivateError": "Error reactivating user"
+    },
+    "validation": {
+      "fullNameRequired": "Full name is required",
+      "usernameRequired": "Username is required",
+      "passwordRequired": "Password is required",
+      "passwordMin": "Password must be at least 6 characters",
+      "roleRequired": "Role is required"
+    }
+  },
+
+  "salaries": {
+    "title": "Salaries",
+    "paySalary": "Pay Salary",
+    "totalPaid": "Total Paid",
+    "lastPayment": "Last Payment",
+    "noPayments": "No payments",
+    "filters": {
+      "allWaiters": "All Waiters",
+      "waiter": "Waiter",
+      "dateFrom": "From Date",
+      "dateTo": "To Date"
+    },
+    "table": {
+      "waiter": "Waiter",
+      "amount": "Amount",
+      "date": "Date",
+      "note": "Note",
+      "paidBy": "Paid By"
+    },
+    "form": {
+      "waiter": "Waiter",
+      "amount": "Amount (RSD)",
+      "note": "Note",
+      "paidAt": "Payment Date",
+      "selectWaiter": "Select a waiter"
+    },
+    "messages": {
+      "created": "Salary paid successfully",
+      "createError": "Error paying salary"
+    },
+    "validation": {
+      "waiterRequired": "Waiter is required",
+      "amountRequired": "Amount is required",
+      "amountPositive": "Amount must be greater than 0"
+    }
+  },
+
+  "reports": {
+    "title": "Reports",
+    "noData": "No data for the selected period",
+    "daily": {
+      "title": "Daily Report",
+      "selectDate": "Select date",
+      "revenueByWaiter": "Revenue by waiter",
+      "shift": "Shift",
+      "shiftFrom": "From",
+      "shiftTo": "To"
+    },
+    "weekly": {
+      "title": "Weekly Report",
+      "selectWeek": "Select week",
+      "revenueByDay": "Revenue by day"
+    },
+    "monthly": {
+      "title": "Monthly Report",
+      "selectMonth": "Select month",
+      "revenueByDay": "Revenue by day",
+      "byCategory": "Spending by category"
+    },
+    "custom": {
+      "title": "Custom Period",
+      "dateFrom": "From date",
+      "dateTo": "To date",
+      "generate": "Generate report",
+      "byCategory": "Spending by category"
+    },
+    "summary": {
+      "total": "Total Revenue",
+      "white": "White",
+      "black": "Black",
+      "billCount": "Bill Count",
+      "avgBill": "Average Bill"
+    },
+    "topProducts": {
+      "title": "Top 10 Products",
+      "product": "Product",
+      "quantity": "Quantity",
+      "amount": "Amount"
+    },
+    "comparison": {
+      "vs": "compared to previous period",
+      "noData": "No data for comparison"
+    },
+    "category": {
+      "name": "Category",
+      "total": "Amount"
+    },
+    "waiter": {
+      "name": "Waiter",
+      "shiftPeriod": "Shift Period",
+      "total": "Revenue",
+      "white": "White",
+      "black": "Black",
+      "billCount": "Bills"
+    }
+  },
+
+  "settings": {
+    "title": "Cafe Settings",
+    "cafeName": "Cafe Name",
+    "cafeAddress": "Address",
+    "cafePib": "Tax ID (PIB)",
+    "cafePhone": "Phone",
+    "minStockThreshold": "Minimum Stock Threshold",
+    "currency": "Currency",
+    "save": "Save Settings",
+    "saved": "Settings saved",
+    "saveError": "Error saving settings"
+  },
+
+  "export": {
+    "pdf": "Export PDF",
+    "excel": "Export Excel",
+    "generating": "Generating...",
+    "generatedAt": "Generated",
+    "summary": "Revenue",
+    "sales": "Sales",
+    "waiters": "Waiters",
+    "categories": "Categories"
+  },
+
   "shifts": {
     "title": "Shifts",
     "start": "Start Shift",
@@ -503,6 +695,33 @@
         "error_note": "Note is required",
         "adjust_success": "Adjustment applied successfully"
       }
+    }
+  },
+
+  "adminDashboard": {
+    "title": "Admin Dashboard",
+    "todayRevenue": "Today's Revenue",
+    "monthRevenue": "Monthly Revenue",
+    "todayBills": "Bills Today",
+    "avgBill": "Average Bill",
+    "vsYesterday": "vs yesterday",
+    "last7Days": "Revenue — Last 7 Days",
+    "topProducts": "Top 5 Products (week)",
+    "whiteBlack": "White / Black (month)",
+    "byCategory": "Revenue by Category (month)",
+    "loadError": "Error loading dashboard data",
+    "noData": "No data",
+    "white": "White",
+    "black": "Black",
+    "quantity": "Quantity",
+    "days": {
+      "Mon": "Mon",
+      "Tue": "Tue",
+      "Wed": "Wed",
+      "Thu": "Thu",
+      "Fri": "Fri",
+      "Sat": "Sat",
+      "Sun": "Sun"
     }
   }
 }

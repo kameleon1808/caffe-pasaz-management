@@ -191,11 +191,16 @@ export function DashboardPage() {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[
-              { titleKey: 'dashboard.admin_table_layout_title', descKey: 'dashboard.admin_table_layout_desc',  icon: '🪑', path: '/admin/table-layout' },
-              { titleKey: 'dashboard.admin_users_title',    descKey: 'dashboard.admin_users_desc',        icon: '👥', path: '/users' },
-              { titleKey: 'dashboard.admin_reports_title',  descKey: 'dashboard.admin_reports_desc',       icon: '📊', path: '/reports' },
-              { titleKey: 'dashboard.admin_settings_title', descKey: 'dashboard.admin_settings_desc',      icon: '⚙️', path: '/settings' },
-              { titleKey: 'dashboard.admin_printer_title',  descKey: 'dashboard.admin_printer_desc',       icon: '🖨', path: '/admin/settings/printer' }
+              { titleKey: 'dashboard.admin_dashboard_title',       descKey: 'dashboard.admin_dashboard_desc',        icon: '📈', path: '/admin/dashboard' },
+              { titleKey: 'dashboard.admin_table_layout_title',    descKey: 'dashboard.admin_table_layout_desc',     icon: '🪑', path: '/admin/table-layout' },
+              { titleKey: 'dashboard.admin_users_manage_title',  descKey: 'dashboard.admin_users_manage_desc',   icon: '👥', path: '/admin/users' },
+              { titleKey: 'dashboard.admin_salaries_title',      descKey: 'dashboard.admin_salaries_desc',        icon: '💵', path: '/admin/salaries' },
+              { titleKey: 'dashboard.admin_reports_daily_title', descKey: 'dashboard.admin_reports_daily_desc',   icon: '📅', path: '/admin/reports/daily' },
+              { titleKey: 'dashboard.admin_reports_weekly_title',descKey: 'dashboard.admin_reports_weekly_desc',  icon: '📆', path: '/admin/reports/weekly' },
+              { titleKey: 'dashboard.admin_reports_monthly_title',descKey: 'dashboard.admin_reports_monthly_desc',icon: '📊', path: '/admin/reports/monthly' },
+              { titleKey: 'dashboard.admin_reports_custom_title',descKey: 'dashboard.admin_reports_custom_desc',  icon: '🔎', path: '/admin/reports/custom' },
+              { titleKey: 'dashboard.admin_settings_title',      descKey: 'dashboard.admin_settings_desc',        icon: '⚙️', path: '/admin/settings' },
+              { titleKey: 'dashboard.admin_printer_title',       descKey: 'dashboard.admin_printer_desc',          icon: '🖨', path: '/admin/settings/printer' }
             ].map(card => (
               <div
                 key={card.path}
