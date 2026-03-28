@@ -52,6 +52,7 @@ export interface CreateProductPayload {
   price:         number
   stockQuantity: number
   unit:          string
+  normQuantity?: number
 }
 
 /** Kreira novi proizvod / Creates a new product */

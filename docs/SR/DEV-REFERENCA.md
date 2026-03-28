@@ -36,13 +36,19 @@ Electron Main Process
 │   │   ├── auth.ts          ← /api/v1/auth/*
 │   │   ├── categories.ts    ← /api/v1/categories/*
 │   │   ├── products.ts      ← /api/v1/products/*
-│   │   └── inventory.ts     ← /api/v1/inventory/*
-│   ├── server/middleware/   ← auth, errorHandler, logger
+│   │   ├── inventory.ts     ← /api/v1/inventory/*
+│   │   ├── tables.ts        ← /api/v1/tables/*       (Faza 3)
+│   │   ├── shifts.ts        ← /api/v1/shifts/*       (Faza 3)
+│   │   └── bills.ts         ← /api/v1/bills/*        (Faza 4)
+│   ├── server/middleware/   ← auth, errorHandler, logger, checkActiveShift
 │   └── server/services/     ← poslovna logika
 │       ├── authService.ts
 │       ├── categoryService.ts
 │       ├── productService.ts
-│       └── inventoryService.ts
+│       ├── inventoryService.ts
+│       ├── tableService.ts  ← CRUD za stolove + isOccupied status  (Faza 3)
+│       ├── shiftService.ts  ← pokretanje/završetak smena            (Faza 3)
+│       └── billService.ts   ← kreiranje/pregled/zatvaranje računa   (Faza 4)
 │
 └── prisma/schema.prisma     ← SQLite baza (prisma/dev.db)
 
@@ -52,18 +58,24 @@ Electron Renderer Process (Vite → React)
 ├── src/App.tsx              ← BrowserRouter + ToastProvider + AuthProvider + Routes
 ├── src/context/
 │   ├── AuthContext.tsx
-│   └── ToastContext.tsx
+│   ├── ToastContext.tsx
+│   └── ShiftContext.tsx      ← stanje aktivne smene, startShift/endShift  (Faza 3)
 ├── src/hooks/
 │   ├── useAuth.ts
-│   └── useToast.ts
+│   ├── useToast.ts
+│   └── useShift.ts           ← pristup ShiftContext-u                      (Faza 3)
 ├── src/api/                 ← fetch klijenti → http://localhost:3001
 │   ├── auth.ts
 │   ├── categories.ts
 │   ├── products.ts
-│   └── inventory.ts
+│   ├── inventory.ts
+│   ├── tables.ts             ← getTables, getTable, createTable, ...       (Faza 3)
+│   ├── shifts.ts             ← startShift, endShift, getActiveShift        (Faza 3)
+│   └── bills.ts              ← createBill, fetchBill, closeBill            (Faza 4)
 ├── src/components/
 │   ├── Layout/              ← MainLayout, Sidebar, Header
 │   ├── ProtectedRoute.tsx
+│   ├── ShiftGuard.tsx        ← blokira /tables bez aktivne smene           (Faza 3)
 │   ├── LanguageSwitcher.tsx
 │   └── ui/                  ← biblioteka za ponovnu upotrebu
 │       ├── Modal.tsx
@@ -76,11 +88,14 @@ Electron Renderer Process (Vite → React)
     ├── LoginPage.tsx
     ├── DashboardPage.tsx
     ├── PlaceholderPage.tsx
+    ├── TablesPage.tsx         ← vizuelni prikaz stolova po zonama           (Faza 3)
+    ├── BillPage.tsx           ← prikaz i zatvaranje računa                  (Faza 4)
     └── admin/
         ├── CategoriesPage.tsx
         ├── ProductsPage.tsx
         ├── InventoryPage.tsx
-        └── PurchasePage.tsx
+        ├── PurchasePage.tsx
+        └── TableLayoutPage.tsx ← admin editor rasporeda stolova            (Faza 3)
 ```
 
 **Tok podataka / Data flow:**

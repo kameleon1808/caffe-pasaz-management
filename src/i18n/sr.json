@@ -27,7 +27,8 @@
     "reports": "Izveštaji",
     "inventory": "Inventar",
     "settings": "Podešavanja",
-    "logout": "Odjava"
+    "logout": "Odjava",
+    "tableLayout": "Raspored stolova"
   },
 
   "common": {
@@ -68,6 +69,8 @@
     "occupied_tables": "Zauzetih stolova",
     "shift_desc_admin": "Kao administrator možete početi ili pregledati smene.",
     "shift_desc_waiter": "Molimo počnite smenu da biste mogli da naplaćujete.",
+    "admin_table_layout_title": "Raspored stolova",
+    "admin_table_layout_desc": "Dodaj, izmeni ili obriši stolove",
     "admin_users_title": "Upravljanje korisnicima",
     "admin_users_desc": "Dodaj, izmeni ili deaktiviraj konobara",
     "admin_reports_title": "Izveštaji",
@@ -164,7 +167,9 @@
     "stock_hint": "Početno stanje zalihe",
     "unit_hint": "Jedinica: kom, lit, dcl, flaša",
     "name_sr_placeholder": "npr. Espreso",
-    "name_en_placeholder": "npr. Espresso"
+    "name_en_placeholder": "npr. Espresso",
+    "normQuantity": "Normativ",
+    "normQuantity_hint": "Količina koja se oduzima iz zaliha pri svakoj prodaji"
   },
 
   "inventory": {
@@ -213,5 +218,148 @@
     "remove_row": "Ukloni red",
     "current_stock": "Trenutno: {{qty}} {{unit}}",
     "select_product": "Izaberite proizvod..."
+  },
+
+  "tables": {
+    "title": "Stolovi",
+    "zones": {
+      "indoor": "Unutrašnjost",
+      "outdoor": "Spoljna terasa"
+    },
+    "status": {
+      "free": "Slobodan",
+      "occupied": "Zauzet"
+    },
+    "openBill": "Otvoreni račun",
+    "total": "Ukupno: {{amount}} RSD",
+    "clickToOpen": "Klikni za otvaranje računa",
+    "clickToView": "Klikni za pregled računa",
+    "noTables": "Nema stolova u ovoj zoni",
+    "loading": "Učitavanje stolova...",
+    "error": "Greška pri učitavanju stolova",
+    "alreadyOccupied": "Sto je već zauzet"
+  },
+
+  "bills": {
+    "title": "Račun",
+    "table": "Sto",
+    "openedAt": "Otvoreno u",
+    "openedBy": "Otvorio",
+    "emptyBill": "Račun je prazan — dodajte stavke",
+    "loading": "Učitavanje računa...",
+    "error": "Greška pri učitavanju računa",
+    "backToTables": "Nazad na stolove",
+    "menu": {
+      "categories": "Kategorije",
+      "products": "Proizvodi",
+      "noProducts": "Nema proizvoda u ovoj kategoriji"
+    },
+    "totals": {
+      "white": "Belo",
+      "black": "Crno",
+      "discount": "Popust",
+      "total": "Ukupno"
+    },
+    "status": {
+      "paid": "Naplaćeno",
+      "cancelled": "Otkazano"
+    },
+    "actions": {
+      "discount": "Popust",
+      "transfer": "Prebaci sto",
+      "pay": "Naplati",
+      "cancel": "Otkaži račun"
+    },
+    "discount": {
+      "title": "Popust na račun",
+      "success": "Popust je primenjen"
+    },
+    "itemDiscount": {
+      "title": "Popust na stavku: {{name}}"
+    },
+    "transfer": {
+      "title": "Prebaci račun na drugi sto",
+      "subtitle": "Izaberite slobodan sto",
+      "noFreeTables": "Nema slobodnih stolova",
+      "success": "Račun je prebačen na drugi sto"
+    },
+    "pay": {
+      "title": "Naplata računa",
+      "subtitle": "Pregled pre naplate",
+      "confirm": "Potvrdi naplatu",
+      "paying": "Naplaćivanje...",
+      "success": "Račun je uspešno naplaćen"
+    },
+    "cancel": {
+      "title": "Otkazivanje računa",
+      "subtitle": "Unesite razlog otkazivanja",
+      "reasonPlaceholder": "Razlog otkazivanja...",
+      "confirm": "Otkaži račun",
+      "success": "Račun je otkazan"
+    },
+    "close": "Zatvori račun",
+    "closeConfirm": "Da li ste sigurni da želite da zatvorite ovaj račun?",
+    "closeConfirmButton": "Zatvori",
+    "closing": "Zatvaranje...",
+    "closeSuccess": "Račun je uspešno zatvoren",
+    "closeError": "Greška pri zatvaranju računa"
+  },
+
+  "tableLayout": {
+    "title": "Raspored stolova",
+    "addTable": "Dodaj sto",
+    "editTable": "Izmeni sto",
+    "deleteTable": "Obriši sto",
+    "deleteConfirm": "Da li ste sigurni da želite da obrišete sto \"{{label}}\"?",
+    "resetPositions": "Resetuj pozicije",
+    "resetConfirm": "Ovo će resetovati pozicije svih stolova na default raspored. Nastaviti?",
+    "form": {
+      "label": "Naziv stola",
+      "labelPlaceholder": "npr. Sto 1",
+      "zone": "Zona",
+      "positionX": "Pozicija X",
+      "positionY": "Pozicija Y"
+    },
+    "table": {
+      "label": "Naziv",
+      "zone": "Zona",
+      "position": "Pozicija (X, Y)",
+      "status": "Status",
+      "actions": "Akcije"
+    },
+    "active": "Aktivan",
+    "inactive": "Neaktivan",
+    "success_create": "Sto je kreiran.",
+    "success_update": "Sto je izmenjen.",
+    "success_delete": "Sto je obrisan.",
+    "success_reset": "Pozicije su resetovane.",
+    "error_save": "Greška pri čuvanju stola.",
+    "error_delete": "Greška pri brisanju stola.",
+    "error_duplicate": "Sto sa ovim nazivom već postoji u ovoj zoni.",
+    "error_has_open_bills": "Sto ima otvorene račune i ne može biti obrisan.",
+    "error_reset": "Greška pri resetovanju pozicija."
+  },
+
+  "shifts": {
+    "title": "Smene",
+    "start": "Započni smenu",
+    "end": "Završi smenu",
+    "active": "Smena aktivna",
+    "activeSince": "Smena aktivna od {{time}}",
+    "noActive": "Nema aktivne smene",
+    "noActiveWaiter": "Molimo vas da započnete smenu pre rada sa stolovima",
+    "noActiveAdmin": "Molimo vas da započnete smenu pre rada sa stolovima",
+    "startPrompt": "Da li ste sigurni da želite da započnete smenu?",
+    "endPrompt": "Da li ste sigurni da želite da završite smenu?",
+    "endWithOpenBills": "Ne možete završiti smenu dok imate otvorene račune",
+    "startSuccess": "Smena je uspešno započeta",
+    "endSuccess": "Smena je uspešno završena",
+    "alreadyActive": "Već imate aktivnu smenu",
+    "notActive": "Nemate aktivnu smenu",
+    "guard": {
+      "title": "Smena nije aktivna",
+      "message": "Morate započeti smenu da biste pristupili ovoj stranici",
+      "startButton": "Započni smenu"
+    }
   }
 }

@@ -27,7 +27,8 @@
     "reports": "Reports",
     "inventory": "Inventory",
     "settings": "Settings",
-    "logout": "Logout"
+    "logout": "Logout",
+    "tableLayout": "Table Layout"
   },
 
   "common": {
@@ -68,6 +69,8 @@
     "occupied_tables": "Occupied Tables",
     "shift_desc_admin": "As an administrator you can start or review shifts.",
     "shift_desc_waiter": "Please start a shift before you can process payments.",
+    "admin_table_layout_title": "Table Layout",
+    "admin_table_layout_desc": "Add, edit or delete tables",
     "admin_users_title": "User Management",
     "admin_users_desc": "Add, edit or deactivate a waiter",
     "admin_reports_title": "Reports",
@@ -164,7 +167,9 @@
     "stock_hint": "Initial stock quantity",
     "unit_hint": "Unit: kom, lit, dcl, flaša",
     "name_sr_placeholder": "e.g. Espreso",
-    "name_en_placeholder": "e.g. Espresso"
+    "name_en_placeholder": "e.g. Espresso",
+    "normQuantity": "Norm Quantity",
+    "normQuantity_hint": "Amount deducted from stock per sale"
   },
 
   "inventory": {
@@ -213,5 +218,148 @@
     "remove_row": "Remove row",
     "current_stock": "Current: {{qty}} {{unit}}",
     "select_product": "Select product..."
+  },
+
+  "tables": {
+    "title": "Tables",
+    "zones": {
+      "indoor": "Indoor",
+      "outdoor": "Outdoor Terrace"
+    },
+    "status": {
+      "free": "Free",
+      "occupied": "Occupied"
+    },
+    "openBill": "Open Bill",
+    "total": "Total: {{amount}} RSD",
+    "clickToOpen": "Click to open bill",
+    "clickToView": "Click to view bill",
+    "noTables": "No tables in this zone",
+    "loading": "Loading tables...",
+    "error": "Error loading tables",
+    "alreadyOccupied": "Table is already occupied"
+  },
+
+  "bills": {
+    "title": "Bill",
+    "table": "Table",
+    "openedAt": "Opened at",
+    "openedBy": "Opened by",
+    "emptyBill": "Bill is empty — add items",
+    "loading": "Loading bill...",
+    "error": "Error loading bill",
+    "backToTables": "Back to tables",
+    "menu": {
+      "categories": "Categories",
+      "products": "Products",
+      "noProducts": "No products in this category"
+    },
+    "totals": {
+      "white": "White",
+      "black": "Black",
+      "discount": "Discount",
+      "total": "Total"
+    },
+    "status": {
+      "paid": "Paid",
+      "cancelled": "Cancelled"
+    },
+    "actions": {
+      "discount": "Discount",
+      "transfer": "Transfer Table",
+      "pay": "Pay",
+      "cancel": "Cancel Bill"
+    },
+    "discount": {
+      "title": "Bill Discount",
+      "success": "Discount applied"
+    },
+    "itemDiscount": {
+      "title": "Item Discount: {{name}}"
+    },
+    "transfer": {
+      "title": "Transfer Bill to Another Table",
+      "subtitle": "Select a free table",
+      "noFreeTables": "No free tables available",
+      "success": "Bill transferred to another table"
+    },
+    "pay": {
+      "title": "Bill Payment",
+      "subtitle": "Summary before payment",
+      "confirm": "Confirm Payment",
+      "paying": "Processing...",
+      "success": "Bill paid successfully"
+    },
+    "cancel": {
+      "title": "Cancel Bill",
+      "subtitle": "Enter the reason for cancellation",
+      "reasonPlaceholder": "Reason for cancellation...",
+      "confirm": "Cancel Bill",
+      "success": "Bill cancelled"
+    },
+    "close": "Close Bill",
+    "closeConfirm": "Are you sure you want to close this bill?",
+    "closeConfirmButton": "Close Bill",
+    "closing": "Closing...",
+    "closeSuccess": "Bill closed successfully",
+    "closeError": "Error closing bill"
+  },
+
+  "tableLayout": {
+    "title": "Table Layout",
+    "addTable": "Add Table",
+    "editTable": "Edit Table",
+    "deleteTable": "Delete Table",
+    "deleteConfirm": "Are you sure you want to delete table \"{{label}}\"?",
+    "resetPositions": "Reset Positions",
+    "resetConfirm": "This will reset all table positions to the default layout. Continue?",
+    "form": {
+      "label": "Table Name",
+      "labelPlaceholder": "e.g. Table 1",
+      "zone": "Zone",
+      "positionX": "Position X",
+      "positionY": "Position Y"
+    },
+    "table": {
+      "label": "Name",
+      "zone": "Zone",
+      "position": "Position (X, Y)",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "active": "Active",
+    "inactive": "Inactive",
+    "success_create": "Table created.",
+    "success_update": "Table updated.",
+    "success_delete": "Table deleted.",
+    "success_reset": "Positions reset.",
+    "error_save": "Error saving table.",
+    "error_delete": "Error deleting table.",
+    "error_duplicate": "A table with this name already exists in this zone.",
+    "error_has_open_bills": "The table has open bills and cannot be deleted.",
+    "error_reset": "Error resetting positions."
+  },
+
+  "shifts": {
+    "title": "Shifts",
+    "start": "Start Shift",
+    "end": "End Shift",
+    "active": "Shift Active",
+    "activeSince": "Shift active since {{time}}",
+    "noActive": "No Active Shift",
+    "noActiveWaiter": "Please start a shift before working with tables",
+    "noActiveAdmin": "Please start a shift before working with tables",
+    "startPrompt": "Are you sure you want to start a shift?",
+    "endPrompt": "Are you sure you want to end the shift?",
+    "endWithOpenBills": "You cannot end your shift while there are open bills",
+    "startSuccess": "Shift started successfully",
+    "endSuccess": "Shift ended successfully",
+    "alreadyActive": "You already have an active shift",
+    "notActive": "You don't have an active shift",
+    "guard": {
+      "title": "Shift Not Active",
+      "message": "You must start a shift to access this page",
+      "startButton": "Start Shift"
+    }
   }
 }

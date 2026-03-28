@@ -1,12 +1,13 @@
 /**
  * @file src/components/Layout/Header.tsx
- * @description Header komponenta sa korisničkim opcijama i language switcherom.
- *              Header component with user options and language switcher.
+ * @description Header komponenta sa korisničkim opcijama, statusom smene i language switcherom.
+ *              Header component with user options, shift status, and language switcher.
  */
 
 import { useTranslation }    from 'react-i18next'
 import { useNavigate }       from 'react-router-dom'
 import { useAuth }           from '../../hooks/useAuth'
+import { useShift }          from '../../hooks/useShift'
 import { LanguageSwitcher }  from '../LanguageSwitcher'
 
 /**
@@ -16,9 +17,15 @@ import { LanguageSwitcher }  from '../LanguageSwitcher'
  * @returns {JSX.Element} Header komponenta / Header component
  */
 export function Header() {
-  const { t }      = useTranslation()
-  const { user, logout } = useAuth()
-  const navigate   = useNavigate()
+  const { t }                    = useTranslation()
+  const { user, logout }         = useAuth()
+  const navigate                 = useNavigate()
+  const { activeShift, endShift, isProcessing } = useShift()
+
+  /** Formatira vreme početka smene / Formats shift start time */
+  const shiftTime = activeShift
+    ? new Date(activeShift.startedAt).toLocaleTimeString('sr-RS', { hour: '2-digit', minute: '2-digit' })
+    : null
 
   /**
    * Odjavljuje korisnika i vraća na login stranicu.
@@ -45,9 +52,30 @@ export function Header() {
         </span>
       </div>
 
-      {/* Desna strana — language switcher i korisničke opcije */}
-      {/* Right side — language switcher and user options */}
+      {/* Desna strana — status smene, language switcher, korisničke opcije */}
+      {/* Right side — shift status, language switcher, user options */}
       <div className="flex items-center gap-3">
+
+        {/* Indikator aktivne smene / Active shift indicator */}
+        {activeShift && shiftTime && (
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-500/10 border border-green-500/25">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse flex-shrink-0" />
+            <span className="text-green-400 text-xs font-medium whitespace-nowrap">
+              {t('shifts.activeSince', { time: shiftTime })}
+            </span>
+            <button
+              onClick={() => void endShift()}
+              disabled={isProcessing}
+              title={t('shifts.end')}
+              className="ml-1 text-green-400/60 hover:text-red-400 transition-colors disabled:opacity-40"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12H3m0 0l7-7M3 12l7 7" />
+              </svg>
+            </button>
+          </div>
+        )}
+
         {/* Language switcher */}
         <LanguageSwitcher />
 

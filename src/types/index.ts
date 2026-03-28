@@ -118,13 +118,44 @@ export type ApiResponse<T> = ApiSuccess<T> | ApiError
  * Physical table in the cafe.
  */
 export interface TableUnit {
-  id:         number
+  id:            number
+  label:         string
+  zone:          Zone
+  positionX:     number
+  positionY:     number
+  isOccupied:    boolean
+  active:        boolean
+  openBillTotal?: number
+  openBillId?:   number | null
+}
+
+/**
+ * Sto sa statusom otvorenog računa (za prikaz na TablesPage).
+ * Table with open bill status (for TablesPage display).
+ */
+export interface TableWithStatus extends TableUnit {
+  openBillTotal: number
+  openBillId:    number | null
+}
+
+/**
+ * Podaci za kreiranje novog stola.
+ * Data for creating a new table.
+ */
+export interface CreateTableData {
   label:      string
   zone:       Zone
-  positionX:  number
-  positionY:  number
-  isOccupied: boolean
-  active:     boolean
+  positionX?: number
+  positionY?: number
+}
+
+/**
+ * Podaci za izmenu pozicije stola.
+ * Data for updating table position.
+ */
+export interface UpdateTablePositionData {
+  positionX: number
+  positionY: number
 }
 
 // ==============================================================================
@@ -154,6 +185,7 @@ export interface Product {
   nameEn:        string
   price:         number
   stockQuantity: number
+  normQuantity:  number
   unit:          string
   active:        boolean
   category?:     Category
@@ -175,6 +207,58 @@ export interface Shift {
   totalWhite:   number
   totalBlack:   number
   totalRevenue: number
+  user?: {
+    id:       number
+    fullName: string
+    username: string
+  }
+}
+
+// ==============================================================================
+// RAČUN / BILL
+// ==============================================================================
+
+/**
+ * Stavka na računu.
+ * Line item on a bill.
+ */
+export interface BillItem {
+  id:        number
+  billId:    number
+  productId: number
+  quantity:  number
+  unitPrice: number
+  color:     Color
+  discount:  number
+  product: {
+    id:           number
+    nameSr:       string
+    nameEn:       string
+    price:        number
+    unit:         string
+    normQuantity: number
+  }
+}
+
+/**
+ * Račun za jedan sto.
+ * Bill for one table.
+ */
+export interface Bill {
+  id:              number
+  tableId:         number
+  shiftId:         number
+  userId:          number
+  status:          BillStatus
+  discountPercent: number
+  total:           number
+  whiteTotal:      number
+  blackTotal:      number
+  createdAt:       string
+  paidAt:          string | null
+  tableUnit:       { id: number; label: string; zone: Zone }
+  user:            { id: number; fullName: string; username: string }
+  items:           BillItem[]
 }
 
 // ==============================================================================

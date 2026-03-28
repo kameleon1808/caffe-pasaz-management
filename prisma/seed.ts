@@ -62,6 +62,36 @@ async function seedAdmin(): Promise<void> {
 }
 
 /**
+ * Kreira default konobar nalog ako već ne postoji.
+ * Creates the default waiter account if one doesn't already exist.
+ */
+async function seedWaiter(): Promise<void> {
+  const existing = await prisma.user.findUnique({
+    where: { username: 'konobar' }
+  })
+
+  if (existing) {
+    console.log('  ✓ Konobar nalog već postoji / Waiter account already exists')
+    return
+  }
+
+  const hashedPassword = await bcrypt.hash('konobar123', 12)
+
+  await prisma.user.create({
+    data: {
+      username: 'konobar',
+      password: hashedPassword,
+      fullName: 'Konobar',
+      role: Role.WAITER,
+      active: true
+    }
+  })
+
+  console.log('  ✓ Kreiran konobar nalog: konobar / konobar123')
+  console.log('  ✓ Created waiter account: konobar / konobar123')
+}
+
+/**
  * Kreira stolove u kafeu (unutrašnji i spoljašnji).
  * Creates cafe tables (indoor and outdoor).
  */
@@ -165,6 +195,9 @@ async function main(): Promise<void> {
 
   console.log('📋 Admin nalog / Admin account:')
   await seedAdmin()
+
+  console.log('\n👤 Konobar nalog / Waiter account:')
+  await seedWaiter()
 
   console.log('\n🪑 Stolovi / Tables:')
   await seedTables()

@@ -17,7 +17,9 @@
  */
 
 import { useTranslation } from 'react-i18next'
+import { useNavigate }    from 'react-router-dom'
 import { useAuth }        from '../hooks/useAuth'
+import { useShift }       from '../hooks/useShift'
 
 /**
  * Komponenta za statističku karticu.
@@ -62,12 +64,19 @@ function StatCard({
  * @returns {JSX.Element} Dashboard sadržaj / Dashboard content
  */
 export function DashboardPage() {
-  const { t }    = useTranslation()
-  const { user } = useAuth()
+  const { t }                                  = useTranslation()
+  const navigate                               = useNavigate()
+  const { user }                               = useAuth()
+  const { activeShift, isProcessing, startShift, endShift } = useShift()
 
   if (!user) return null
 
   const isAdmin = user.role === 'ADMIN'
+
+  // Formatiranje vremena početka smene / Format shift start time
+  const shiftStartTime = activeShift
+    ? new Date(activeShift.startedAt).toLocaleTimeString('sr-RS', { hour: '2-digit', minute: '2-digit' })
+    : null
 
   return (
     <div className="p-6 space-y-6">
@@ -125,25 +134,51 @@ export function DashboardPage() {
       </div>
 
       {/* Status smene / Shift status */}
-      <div className="bg-surface-card rounded-2xl p-5 border border-white/5">
+      <div className={`
+        rounded-2xl p-5 border
+        ${activeShift
+          ? 'bg-green-500/5 border-green-500/20'
+          : 'bg-surface-card border-white/5'
+        }
+      `}>
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h3 className="text-white font-semibold mb-1">
-              {t('dashboard.no_active_shift')}
-            </h3>
+            <div className="flex items-center gap-2 mb-1">
+              {activeShift && (
+                <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+              )}
+              <h3 className="text-white font-semibold">
+                {activeShift
+                  ? t('shifts.activeSince', { time: shiftStartTime ?? '' })
+                  : t('dashboard.no_active_shift')
+                }
+              </h3>
+            </div>
             <p className="text-gray-400 text-sm">
               {isAdmin
                 ? t('dashboard.shift_desc_admin')
                 : t('dashboard.shift_desc_waiter')}
             </p>
           </div>
-          <button className="
-            px-4 py-2 bg-primary-500 hover:bg-primary-600
-            text-white font-medium rounded-xl
-            transition-colors duration-200
-            text-sm
-          ">
-            {t('dashboard.start_shift')}
+          <button
+            onClick={() => activeShift ? void endShift() : void startShift()}
+            disabled={isProcessing}
+            className={`
+              px-4 py-2 font-medium rounded-xl
+              transition-colors duration-200
+              text-sm disabled:opacity-50 disabled:cursor-not-allowed
+              ${activeShift
+                ? 'bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30'
+                : 'bg-primary-500 hover:bg-primary-600 text-black'
+              }
+            `}
+          >
+            {isProcessing
+              ? t('common.loading')
+              : activeShift
+                ? t('dashboard.end_shift')
+                : t('dashboard.start_shift')
+            }
           </button>
         </div>
       </div>
@@ -156,12 +191,14 @@ export function DashboardPage() {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[
+              { titleKey: 'dashboard.admin_table_layout_title', descKey: 'dashboard.admin_table_layout_desc', icon: '🪑', path: '/admin/table-layout' },
               { titleKey: 'dashboard.admin_users_title',    descKey: 'dashboard.admin_users_desc',    icon: '👥', path: '/users' },
               { titleKey: 'dashboard.admin_reports_title',  descKey: 'dashboard.admin_reports_desc',  icon: '📊', path: '/reports' },
               { titleKey: 'dashboard.admin_settings_title', descKey: 'dashboard.admin_settings_desc', icon: '⚙️', path: '/settings' }
             ].map(card => (
               <div
                 key={card.path}
+                onClick={() => navigate(card.path)}
                 className="
                   bg-surface-card hover:bg-white/5
                   rounded-2xl p-5 border border-white/5

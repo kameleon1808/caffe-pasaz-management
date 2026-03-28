@@ -172,6 +172,7 @@ Vraća listu proizvoda.
       "price": 150,
       "stockQuantity": 100,
       "unit": "kom",
+      "normQuantity": 1.0,
       "active": true,
       "category": { "id": 1, "nameSr": "Kafa", "nameEn": "Coffee", "sortOrder": 1, "active": true }
     }
@@ -202,6 +203,7 @@ Kreira novi proizvod.
 - `stockQuantity` mora biti ≥ 0
 - `unit` mora biti jedan od: `kom`, `lit`, `dcl`, `flaša`
 - `categoryId` mora ukazivati na aktivnu kategoriju
+- `normQuantity` (opciono, default `1.0`) — koliko inventarnih jedinica se oduzima po prodaji; omogućava razlomljeno oduzimanje (npr. `0.5` lit po čaši)
 
 ---
 
@@ -352,7 +354,9 @@ updateProduct(id: number, data: Partial<...>): Promise<Product>
 deleteProduct(id: number): Promise<void>
 ```
 
-Dozvoljene jedinice mere: `['kom', 'lit', 'dcl', 'flaša']`
+Dozvoljene jedinice mere: `['kom', 'lit', 'dcl', 'flaša', 'g']`
+
+`normQuantity` (default `1.0`) — inventarne jedinice koje se oduzimaju po prodaji (koristi `payBill` u Fazi 4).
 
 ### `inventoryService.ts`
 

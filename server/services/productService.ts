@@ -27,6 +27,7 @@ export interface CreateProductData {
   price:         number
   stockQuantity: number
   unit:          Unit
+  normQuantity?: number
 }
 
 /** Tip za izmenu proizvoda / Type for updating a product */
@@ -37,6 +38,7 @@ export interface UpdateProductData {
   price?:         number
   stockQuantity?: number
   unit?:          Unit
+  normQuantity?:  number
   active?:        boolean
 }
 

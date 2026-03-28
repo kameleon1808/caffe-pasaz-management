@@ -58,9 +58,9 @@ productsRouter.get('/:id', requireAuth, async (req: Request, res: Response, next
  */
 productsRouter.post('/', requireAuth, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { categoryId, nameSr, nameEn, price, stockQuantity, unit } = req.body as {
+    const { categoryId, nameSr, nameEn, price, stockQuantity, unit, normQuantity } = req.body as {
       categoryId?: number; nameSr?: string; nameEn?: string
-      price?: number; stockQuantity?: number; unit?: string
+      price?: number; stockQuantity?: number; unit?: string; normQuantity?: number
     }
 
     if (!categoryId)       throw new AppError('Kategorija je obavezna / Category is required',                 400, 'VALIDATION_ERROR')
@@ -73,7 +73,8 @@ productsRouter.post('/', requireAuth, requireAdmin, async (req: Request, res: Re
 
     const product = await createProduct({
       categoryId, nameSr: nameSr.trim(), nameEn: nameEn?.trim() ?? '',
-      price, stockQuantity, unit: unit as Unit
+      price, stockQuantity, unit: unit as Unit,
+      ...(normQuantity !== undefined ? { normQuantity } : {})
     })
     res.status(201).json({ success: true, data: product })
   } catch (e) { next(e) }
@@ -89,9 +90,9 @@ productsRouter.put('/:id', requireAuth, requireAdmin, async (req: Request, res: 
     const id = parseInt(req.params['id']!, 10)
     if (isNaN(id)) throw new AppError('Nevažeći ID / Invalid ID', 400, 'VALIDATION_ERROR')
 
-    const { categoryId, nameSr, nameEn, price, stockQuantity, unit, active } = req.body as {
+    const { categoryId, nameSr, nameEn, price, stockQuantity, unit, normQuantity, active } = req.body as {
       categoryId?: number; nameSr?: string; nameEn?: string
-      price?: number; stockQuantity?: number; unit?: string; active?: boolean
+      price?: number; stockQuantity?: number; unit?: string; normQuantity?: number; active?: boolean
     }
 
     if (unit !== undefined && !ALLOWED_UNITS.includes(unit as Unit)) {
@@ -105,6 +106,7 @@ productsRouter.put('/:id', requireAuth, requireAdmin, async (req: Request, res: 
       ...(price         !== undefined ? { price }                          : {}),
       ...(stockQuantity !== undefined ? { stockQuantity }                  : {}),
       ...(unit          !== undefined ? { unit: unit as Unit }             : {}),
+      ...(normQuantity  !== undefined ? { normQuantity }                   : {}),
       ...(active        !== undefined ? { active }                         : {})
     })
     res.json({ success: true, data: product })

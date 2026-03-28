@@ -19,6 +19,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 // Kontekst / Context
 import { AuthProvider }  from './context/AuthContext'
 import { ToastProvider } from './context/ToastContext'
+import { ShiftProvider } from './context/ShiftContext'
 
 // Komponente / Components
 import { ProtectedRoute } from './components/ProtectedRoute'
@@ -30,10 +31,15 @@ import { LoginPage }     from './pages/LoginPage'
 import { DashboardPage } from './pages/DashboardPage'
 
 // Admin stranice — Faza 2 / Admin pages — Phase 2
-import { CategoriesPage } from './pages/admin/CategoriesPage'
-import { ProductsPage }   from './pages/admin/ProductsPage'
-import { InventoryPage }  from './pages/admin/InventoryPage'
-import { PurchasePage }   from './pages/admin/PurchasePage'
+import { CategoriesPage }  from './pages/admin/CategoriesPage'
+import { ProductsPage }    from './pages/admin/ProductsPage'
+import { InventoryPage }   from './pages/admin/InventoryPage'
+import { PurchasePage }    from './pages/admin/PurchasePage'
+
+// Stranice — Faza 3 / Pages — Phase 3
+import { TablesPage }      from './pages/TablesPage'
+import { TableLayoutPage } from './pages/admin/TableLayoutPage'
+import { BillPage }        from './pages/BillPage'
 
 // Placeholder stranice za buduće faze / Placeholder pages for future phases
 import { PlaceholderPage } from './pages/PlaceholderPage'
@@ -50,6 +56,7 @@ function App() {
       <ToastProvider>
         <Toaster />
         <AuthProvider>
+        <ShiftProvider>
         <Routes>
           {/* Javne rute / Public routes */}
           <Route path="/login" element={<LoginPage />} />
@@ -72,18 +79,18 @@ function App() {
             element={
               <ProtectedRoute>
                 <MainLayout>
-                  <PlaceholderPage titleKey="nav.tables" icon="🪑" />
+                  <TablesPage />
                 </MainLayout>
               </ProtectedRoute>
             }
           />
 
           <Route
-            path="/bills"
+            path="/bills/:id"
             element={
               <ProtectedRoute>
                 <MainLayout>
-                  <PlaceholderPage titleKey="nav.bills" icon="🧾" />
+                  <BillPage />
                 </MainLayout>
               </ProtectedRoute>
             }
@@ -128,6 +135,18 @@ function App() {
               <ProtectedRoute>
                 <MainLayout>
                   <PlaceholderPage titleKey="nav.shifts" icon="⏰" />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Raspored stolova — admin / Table layout — admin */}
+          <Route
+            path="/admin/table-layout"
+            element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <MainLayout>
+                  <TableLayoutPage />
                 </MainLayout>
               </ProtectedRoute>
             }
@@ -184,6 +203,7 @@ function App() {
           {/* 404 / Not found */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
+        </ShiftProvider>
         </AuthProvider>
       </ToastProvider>
     </BrowserRouter>

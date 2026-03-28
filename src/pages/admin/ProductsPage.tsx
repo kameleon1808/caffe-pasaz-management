@@ -39,6 +39,7 @@ interface ProductForm {
   price:         string
   stockQuantity: string
   unit:          string
+  normQuantity?: string
   active?:       boolean
 }
 
@@ -58,6 +59,7 @@ const EMPTY_FORM: ProductForm = {
   price:         '',
   stockQuantity: '0',
   unit:          'kom',
+  normQuantity:  '1',
 }
 
 /**
@@ -141,6 +143,7 @@ export function ProductsPage() {
       price:         String(product.price),
       stockQuantity: String(product.stockQuantity),
       unit:          product.unit,
+      normQuantity:  String(product.normQuantity ?? 1),
       active:        product.active,
     })
     setErrors({})
@@ -180,6 +183,7 @@ export function ProductsPage() {
         price:         parseFloat(form.price),
         stockQuantity: parseInt(form.stockQuantity),
         unit:          form.unit,
+        normQuantity:  parseFloat(form.normQuantity ?? '1'),
       }
       if (editTarget) {
         await updateProduct(editTarget.id, { ...payload, active: form.active })
@@ -415,6 +419,17 @@ export function ProductsPage() {
               </select>
             </FormField>
           </div>
+
+          <FormField label={t('products.normQuantity')} hint={t('products.normQuantity_hint')}>
+            <input
+              type="number"
+              value={form.normQuantity ?? '1'}
+              onChange={e => setForm(f => ({ ...f, normQuantity: e.target.value }))}
+              min={0.001}
+              step={0.001}
+              className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-primary-500 text-sm"
+            />
+          </FormField>
 
           {editTarget && (
             <label className="flex items-center gap-2 text-sm text-white/70 cursor-pointer">

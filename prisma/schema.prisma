@@ -115,6 +115,7 @@ model Product {
   price         Float
   stockQuantity Float   @default(0)
   unit          String  @default("kom") // "kom" | "lit" | "dcl"
+  normQuantity  Float   @default(1.0)   // koliko jedinica se oduzima iz zaliha pri prodaji / how many units are deducted from stock per sale
   active        Boolean @default(true)
 
   category      Category       @relation(fields: [categoryId], references: [id])

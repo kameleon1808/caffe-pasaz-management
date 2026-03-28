@@ -23,6 +23,9 @@ import { authRouter }       from './routes/auth'
 import { categoriesRouter } from './routes/categories'
 import { productsRouter }   from './routes/products'
 import { inventoryRouter }  from './routes/inventory'
+import { tablesRouter }     from './routes/tables'
+import { shiftsRouter }     from './routes/shifts'
+import { billsRouter }      from './routes/bills'
 
 // Učitaj .env fajl / Load .env file
 config({ path: resolve(process.cwd(), '.env') })
@@ -81,6 +84,15 @@ function createApp(): Application {
 
   // Magacin / Inventory
   app.use('/api/v1/inventory', inventoryRouter)
+
+  // Stolovi / Tables
+  app.use('/api/v1/tables', tablesRouter)
+
+  // Smene / Shifts
+  app.use('/api/v1/shifts', shiftsRouter)
+
+  // Računi / Bills
+  app.use('/api/v1/bills', billsRouter)
 
   // ── Error Handler (mora biti poslednji!) ──────────────────────────────────
   // Error Handler (must be last!)

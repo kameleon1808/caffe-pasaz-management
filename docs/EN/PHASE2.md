@@ -174,6 +174,7 @@ Returns the list of products.
       "price": 150,
       "stockQuantity": 100,
       "unit": "kom",
+      "normQuantity": 1.0,
       "active": true,
       "category": { "id": 1, "nameSr": "Kafa", "nameEn": "Coffee", "sortOrder": 1, "active": true }
     }
@@ -204,6 +205,7 @@ Creates a new product.
 - `stockQuantity` must be ≥ 0
 - `unit` must be one of: `kom`, `lit`, `dcl`, `flaša`
 - `categoryId` must point to an active category
+- `normQuantity` (optional, default `1.0`) — how many stock units are deducted per sale; allows fractional deduction (e.g. `0.5` lit per glass)
 
 ---
 
@@ -354,7 +356,9 @@ updateProduct(id: number, data: Partial<...>): Promise<Product>
 deleteProduct(id: number): Promise<void>
 ```
 
-Allowed units: `['kom', 'lit', 'dcl', 'flaša']`
+Allowed units: `['kom', 'lit', 'dcl', 'flaša', 'g']`
+
+`normQuantity` (default `1.0`) — stock units deducted per sale (used by `payBill` in Phase 4).
 
 ### `inventoryService.ts`
 
