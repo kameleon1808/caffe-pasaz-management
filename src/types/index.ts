@@ -262,6 +262,31 @@ export interface Bill {
 }
 
 // ==============================================================================
+// PODEŠAVANJA / SETTINGS
+// ==============================================================================
+
+/**
+ * Konfiguracija POS termalnog štampača.
+ * POS thermal printer configuration.
+ */
+export interface PrinterSettings {
+  /** Tip konekcije: usb, network ili disabled / Connection type: usb, network or disabled */
+  printer_type:   'usb' | 'network' | 'disabled'
+  /** IP adresa (za network) ili putanja uređaja (za usb) / IP (for network) or device path (for usb) */
+  printer_path:   string
+  /** TCP port za mrežni štampač (podrazumevano 9100) / TCP port for network printer (default 9100) */
+  printer_port:   string
+  /** Širina papira u karakterima (48 ili 80) / Paper width in characters (48 or 80) */
+  printer_width:  '48' | '80'
+  /** Naziv kafea za zaglavlje računa / Cafe name for receipt header */
+  cafe_name:      string
+  /** Adresa kafea za zaglavlje računa / Cafe address for receipt header */
+  cafe_address:   string
+  /** PIB broj kafea za zaglavlje računa / Cafe PIB for receipt header */
+  cafe_pib:       string
+}
+
+// ==============================================================================
 // NAVIGACIJA / NAVIGATION
 // ==============================================================================
 

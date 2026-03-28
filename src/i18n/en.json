@@ -28,7 +28,8 @@
     "inventory": "Inventory",
     "settings": "Settings",
     "logout": "Logout",
-    "tableLayout": "Table Layout"
+    "tableLayout": "Table Layout",
+    "printer": "Printer"
   },
 
   "common": {
@@ -76,7 +77,9 @@
     "admin_reports_title": "Reports",
     "admin_reports_desc": "Daily, weekly and monthly reports",
     "admin_settings_title": "Settings",
-    "admin_settings_desc": "System settings for the cafe"
+    "admin_settings_desc": "System settings for the cafe",
+    "admin_printer_title": "Printer",
+    "admin_printer_desc": "POS thermal printer configuration"
   },
 
   "roles": {
@@ -338,6 +341,51 @@
     "error_duplicate": "A table with this name already exists in this zone.",
     "error_has_open_bills": "The table has open bills and cannot be deleted.",
     "error_reset": "Error resetting positions."
+  },
+
+  "printer": {
+    "title": "Printer Settings",
+    "subtitle": "POS thermal printer configuration",
+    "type_label": "Connection Type",
+    "type_usb": "USB",
+    "type_network": "Network (TCP/IP)",
+    "type_disabled": "Disabled",
+    "path_label": "IP Address / Device Path",
+    "path_placeholder_network": "e.g. 192.168.1.100",
+    "path_placeholder_usb": "e.g. /dev/usb/lp0 or \\\\.\\USB001",
+    "port_label": "Port",
+    "port_placeholder": "9100",
+    "width_label": "Paper Width",
+    "width_48": "48 characters (80mm)",
+    "width_80": "80 characters (80mm/wide)",
+    "cafe_name_label": "Cafe Name",
+    "cafe_name_placeholder": "Kafić Pasaz",
+    "cafe_address_label": "Address",
+    "cafe_address_placeholder": "Street and number, City",
+    "cafe_pib_label": "Tax ID (PIB)",
+    "cafe_pib_placeholder": "e.g. 123456789",
+    "save": "Save Settings",
+    "saving": "Saving...",
+    "test_print": "Test Print",
+    "testing": "Printing...",
+    "success_save": "Settings saved.",
+    "success_test": "Test page printed.",
+    "error_save": "Error saving settings.",
+    "error_test": "Printer error. Check the connection.",
+    "error_load": "Error loading settings.",
+    "status_title": "Printer Status",
+    "status_disabled": "Disabled — configure the printer before use",
+    "status_usb": "USB — direct connection",
+    "status_network": "Network — TCP/IP connection",
+    "reprint": "Reprint",
+    "reprinting": "Printing...",
+    "reprint_success": "Receipt reprinted.",
+    "reprint_error": "Error reprinting receipt.",
+    "auto_print_error": "Payment successful, but printing failed: {{error}}",
+    "auto_print_warning": "Printer unavailable. Use 'Reprint' when printer is connected.",
+    "section_connection": "Connection",
+    "section_paper": "Paper & Format",
+    "section_cafe": "Cafe Info (for receipt header)"
   },
 
   "shifts": {

@@ -24,6 +24,7 @@ import {
   payBill,
   cancelBill,
 } from '../api/bills'
+import { printReceipt } from '../api/print'
 import { fetchCategories } from '../api/categories'
 import { fetchProducts }   from '../api/products'
 import { fetchTables }     from '../api/tables'
@@ -529,6 +530,8 @@ export function BillPage() {
   const [showCancel,  setShowCancel]  = useState(false)
   const [cancelling,  setCancelling]  = useState(false)
 
+  const [reprinting,  setReprinting]  = useState(false)
+
   // ── Učitavanje podataka / Data loading ────────────────────────────────────
 
   const loadBill = useCallback(async () => {
@@ -668,8 +671,18 @@ export function BillPage() {
     if (!bill) return
     setPaying(true)
     try {
-      await payBill(bill.id)
+      const paidBill = await payBill(bill.id)
       showToast(t('bills.pay.success'), 'success')
+
+      // Automatska štampa — ne blokira navigaciju ako štampač nije dostupan
+      // Auto-print — does not block navigation if printer is unavailable
+      const printResult = await printReceipt(paidBill.id)
+      if (!printResult.success) {
+        // Štampač nije dostupan — prikaži upozorenje ali dozvoli naplatu
+        // Printer unavailable — show warning but allow payment
+        showToast(t('printer.auto_print_warning'), 'warning')
+      }
+
       navigate('/tables', { replace: true })
     } catch (err) {
       showToast((err as Error).message ?? t('bills.error'), 'error')
@@ -677,6 +690,21 @@ export function BillPage() {
       setShowPay(false)
     }
   }, [bill, navigate, showToast, t])
+
+  const handleReprint = useCallback(async () => {
+    if (!bill) return
+    setReprinting(true)
+    try {
+      const result = await printReceipt(bill.id)
+      if (result.success) {
+        showToast(t('printer.reprint_success'), 'success')
+      } else {
+        showToast(result.message, 'error')
+      }
+    } finally {
+      setReprinting(false)
+    }
+  }, [bill, showToast, t])
 
   const handleCancel = useCallback(async (reason: string) => {
     if (!bill) return
@@ -929,13 +957,28 @@ export function BillPage() {
                   </button>
                 </div>
               ) : (
-                <div className="text-center py-2">
+                <div className="flex items-center justify-between gap-3">
                   <span className={`
                     inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium
                     ${bill.status === 'PAID' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}
                   `}>
                     {bill.status === 'PAID' ? t('bills.status.paid') : t('bills.status.cancelled')}
                   </span>
+                  {bill.status === 'PAID' && (
+                    <button
+                      onClick={handleReprint}
+                      disabled={reprinting}
+                      className="px-4 py-2 rounded-xl text-sm font-medium
+                                 bg-white/8 text-white/60 border border-white/10
+                                 hover:bg-white/12 hover:text-white transition-colors
+                                 disabled:opacity-40 flex items-center gap-2"
+                    >
+                      {reprinting
+                        ? <><Spinner small /><span>{t('printer.reprinting')}</span></>
+                        : <>🖨 {t('printer.reprint')}</>
+                      }
+                    </button>
+                  )}
                 </div>
               )}
             </div>

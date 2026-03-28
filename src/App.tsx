@@ -31,10 +31,13 @@ import { LoginPage }     from './pages/LoginPage'
 import { DashboardPage } from './pages/DashboardPage'
 
 // Admin stranice — Faza 2 / Admin pages — Phase 2
-import { CategoriesPage }  from './pages/admin/CategoriesPage'
-import { ProductsPage }    from './pages/admin/ProductsPage'
-import { InventoryPage }   from './pages/admin/InventoryPage'
-import { PurchasePage }    from './pages/admin/PurchasePage'
+import { CategoriesPage }        from './pages/admin/CategoriesPage'
+import { ProductsPage }          from './pages/admin/ProductsPage'
+import { InventoryPage }         from './pages/admin/InventoryPage'
+import { PurchasePage }          from './pages/admin/PurchasePage'
+
+// Admin stranice — Faza 5 / Admin pages — Phase 5
+import { PrinterSettingsPage }   from './pages/admin/PrinterSettingsPage'
 
 // Stranice — Faza 3 / Pages — Phase 3
 import { TablesPage }      from './pages/TablesPage'
@@ -192,6 +195,18 @@ function App() {
               <ProtectedRoute roles={['ADMIN']}>
                 <MainLayout>
                   <PlaceholderPage titleKey="nav.settings" icon="⚙️" />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Podešavanja štampača — Faza 5 / Printer settings — Phase 5 */}
+          <Route
+            path="/admin/settings/printer"
+            element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <MainLayout>
+                  <PrinterSettingsPage />
                 </MainLayout>
               </ProtectedRoute>
             }

@@ -26,6 +26,8 @@ import { inventoryRouter }  from './routes/inventory'
 import { tablesRouter }     from './routes/tables'
 import { shiftsRouter }     from './routes/shifts'
 import { billsRouter }      from './routes/bills'
+import { settingsRouter }   from './routes/settings'
+import { printRouter }      from './routes/print'
 
 // Učitaj .env fajl / Load .env file
 config({ path: resolve(process.cwd(), '.env') })
@@ -93,6 +95,12 @@ function createApp(): Application {
 
   // Računi / Bills
   app.use('/api/v1/bills', billsRouter)
+
+  // Podešavanja / Settings
+  app.use('/api/v1/settings', settingsRouter)
+
+  // Štampanje / Printing
+  app.use('/api/v1/print', printRouter)
 
   // ── Error Handler (mora biti poslednji!) ──────────────────────────────────
   // Error Handler (must be last!)

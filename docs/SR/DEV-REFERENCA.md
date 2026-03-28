@@ -39,16 +39,22 @@ Electron Main Process
 │   │   ├── inventory.ts     ← /api/v1/inventory/*
 │   │   ├── tables.ts        ← /api/v1/tables/*       (Faza 3)
 │   │   ├── shifts.ts        ← /api/v1/shifts/*       (Faza 3)
-│   │   └── bills.ts         ← /api/v1/bills/*        (Faza 4)
+│   │   ├── bills.ts         ← /api/v1/bills/*        (Faza 4)
+│   │   ├── settings.ts      ← /api/v1/settings/*     (Faza 5)
+│   │   └── print.ts         ← /api/v1/print/*        (Faza 5)
+│   ├── server/lib/          ← singleton i infrastruktura
+│   │   ├── prisma.ts        ← singleton PrismaClient
+│   │   └── printerService.ts ← ESC/POS formatiranje i slanje       (Faza 5)
 │   ├── server/middleware/   ← auth, errorHandler, logger, checkActiveShift
 │   └── server/services/     ← poslovna logika
 │       ├── authService.ts
 │       ├── categoryService.ts
 │       ├── productService.ts
 │       ├── inventoryService.ts
-│       ├── tableService.ts  ← CRUD za stolove + isOccupied status  (Faza 3)
-│       ├── shiftService.ts  ← pokretanje/završetak smena            (Faza 3)
-│       └── billService.ts   ← kreiranje/pregled/zatvaranje računa   (Faza 4)
+│       ├── tableService.ts    ← CRUD za stolove + isOccupied status  (Faza 3)
+│       ├── shiftService.ts    ← pokretanje/završetak smena            (Faza 3)
+│       ├── billService.ts     ← kreiranje/pregled/zatvaranje računa   (Faza 4)
+│       └── settingsService.ts ← čitanje/čuvanje Setting ključeva      (Faza 5)
 │
 └── prisma/schema.prisma     ← SQLite baza (prisma/dev.db)
 
@@ -71,7 +77,9 @@ Electron Renderer Process (Vite → React)
 │   ├── inventory.ts
 │   ├── tables.ts             ← getTables, getTable, createTable, ...       (Faza 3)
 │   ├── shifts.ts             ← startShift, endShift, getActiveShift        (Faza 3)
-│   └── bills.ts              ← createBill, fetchBill, closeBill            (Faza 4)
+│   ├── bills.ts              ← createBill, fetchBill, payBill...           (Faza 4)
+│   ├── settings.ts           ← fetchPrinterSettings, savePrinterSettings   (Faza 5)
+│   └── print.ts              ← printReceipt, printTestPage                 (Faza 5)
 ├── src/components/
 │   ├── Layout/              ← MainLayout, Sidebar, Header
 │   ├── ProtectedRoute.tsx
@@ -95,7 +103,8 @@ Electron Renderer Process (Vite → React)
         ├── ProductsPage.tsx
         ├── InventoryPage.tsx
         ├── PurchasePage.tsx
-        └── TableLayoutPage.tsx ← admin editor rasporeda stolova            (Faza 3)
+        ├── TableLayoutPage.tsx   ← admin editor rasporeda stolova          (Faza 3)
+        └── PrinterSettingsPage.tsx ← konfiguracija POS štampača           (Faza 5)
 ```
 
 **Tok podataka / Data flow:**
@@ -622,6 +631,78 @@ Otkazuje račun. Zalihe se ne menjaju.
 
 ---
 
+### `GET /settings/printer`
+
+**Izvor:** `server/routes/settings.ts` | Zahteva: `requireAuth`
+
+Vraća sva podešavanja štampača i kafea iz `Setting` tabele.
+
+**Uspešan odgovor `200`:**
+```json
+{
+  "printer_type": "network",
+  "printer_path": "192.168.1.100",
+  "printer_port": "9100",
+  "printer_width": "48",
+  "cafe_name": "Kafić Pasaz",
+  "cafe_address": "Ulica 1, Beograd",
+  "cafe_pib": "123456789"
+}
+```
+
+---
+
+### `PUT /settings/printer` **[ADMIN]**
+
+**Izvor:** `server/routes/settings.ts` | Zahteva: `requireAuth`, `requireAdmin`
+
+Čuva podešavanja štampača (upsert po ključu u `Setting` tabeli).
+
+**Body:** `Partial<PrinterSettings>` — sva polja su opciona.
+
+**Kodovi grešaka:**
+
+| Poruka | Uzrok |
+|--------|-------|
+| `Nevažeći tip štampača` | `printer_type` nije `usb`/`network`/`disabled` |
+| `Nevažeća širina` | `printer_width` nije `48` ili `80` |
+| `Nevažeći port` | Port nije broj 1–65535 |
+
+---
+
+### `POST /print/receipt/:billId`
+
+**Izvor:** `server/routes/print.ts` | Zahteva: `requireAuth`
+
+Štampa račun na POS štampaču. Koristi se pri naplati (automatski) i za ponovnu štampu.
+
+**Uspešan odgovor `200`:**
+```json
+{ "success": true, "message": "Račun je odštampan / Receipt printed" }
+```
+
+**Greška `503` (štampač nedostupan):**
+```json
+{ "error": "Štampač nije dostupan / Printer not available", "code": "PRINTER_ERROR" }
+```
+
+| Kod                | Uzrok                                         |
+|--------------------|-----------------------------------------------|
+| `PRINTER_DISABLED` | `printer_type = disabled` u podešavanjima     |
+| `PRINTER_ERROR`    | Štampač nije dostupan / greška konekcije      |
+
+> **Napomena:** Ovaj endpoint vraća `503` umesto da prosledi grešku `errorHandler`-u — naplata mora proći čak i ako štampač nije dostupan.
+
+---
+
+### `POST /print/test`
+
+**Izvor:** `server/routes/print.ts` | Zahteva: `requireAuth`
+
+Štampa testnu stranicu za proveru konekcije. Isti format greške kao `/print/receipt`.
+
+---
+
 ## Server Middleware
 
 ### `requireAuth`
@@ -868,6 +949,76 @@ total      = (whiteRaw + blackRaw) × discFactor
 whiteTotal = whiteRaw × discFactor
 blackTotal = blackRaw × discFactor
 ```
+
+---
+
+### `settingsService` (Faza 5)
+
+**Izvor:** `server/services/settingsService.ts`
+
+```typescript
+export async function getPrinterSettings(): Promise<PrinterSettings>
+export async function savePrinterSettings(data: Partial<PrinterSettings>): Promise<PrinterSettings>
+```
+
+Čita/upisuje ključeve `printer_type`, `printer_path`, `printer_port`, `printer_width`, `cafe_name`, `cafe_address`, `cafe_pib` u `Setting` tabeli (upsert po ključu).
+
+Podrazumevane vrednosti ako ključ ne postoji u bazi:
+
+| Ključ            | Default          |
+|------------------|------------------|
+| `printer_type`   | `disabled`       |
+| `printer_path`   | `192.168.1.100`  |
+| `printer_port`   | `9100`           |
+| `printer_width`  | `48`             |
+| `cafe_name`      | `Kafić Pasaz`    |
+| `cafe_address`   | `""`             |
+| `cafe_pib`       | `""`             |
+
+---
+
+### `printerService` (Faza 5)
+
+**Izvor:** `server/lib/printerService.ts`
+
+```typescript
+export async function printReceipt(bill: PrintBillData, config: PrinterConfig, cafe: CafeInfo): Promise<void>
+export async function printTestPage(config: PrinterConfig, cafe: CafeInfo): Promise<void>
+export async function loadPrinterConfig(): Promise<PrinterConfig>
+export async function loadCafeInfo(): Promise<CafeInfo>
+```
+
+Koristi `node-thermal-printer` biblioteku (ESC/POS protokol). Podržava:
+- **network**: TCP konekcija na `tcp://IP:port`
+- **usb**: Direktna putanja uređaja (npr. `/dev/usb/lp0`, `\\.\USB001`)
+
+Format računa (48-char primer):
+```
+========================================
+Kafić Pasaz
+Ulica 1, Beograd
+PIB: 123456789
+========================================
+Račun br: 42
+Datum: 28.03.2026 14:35
+Konobar: Marko Marković
+Sto: Sto 3
+----------------------------------------
+Artikal                  Kol  Ukupno
+----------------------------------------
+Espreso                    2  300.00 RSD
+Popust (10%):         -25.00 RSD
+========================================
+ZA NAPLATU:           275.00 RSD
+========================================
+Hvala na poseti!
+28.03.2026 14:36
+========================================
+```
+
+Baca `Error` ako:
+- `config.type === 'disabled'`
+- `isPrinterConnected()` vrati `false` (timeout: 5s)
 
 ---
 
@@ -1166,6 +1317,11 @@ Split-panel POS ekran za upravljanje računom jednog stola.
 | `CancelModal`       | Obavezna napomena za otkazivanje              |
 | `PayConfirmModal`   | Pregled iznosa pred naplatu                   |
 
+**Integracija sa štampačem (Faza 5):**
+- Nakon uspešnog `payBill()` automatski se poziva `POST /print/receipt/:billId`
+- Ako štampač nije dostupan → prikazuje se `warning` toast ali navigacija na `/tables` se nastavlja
+- Za plaćene račune prikazuje se dugme **"Ponovo štampaj"** koji ponovo poziva isti endpoint
+
 ### `<TableLayoutPage>` **[ADMIN]**
 
 **Izvor:** `src/pages/admin/TableLayoutPage.tsx`
@@ -1205,6 +1361,25 @@ Blokira pristup stranici ako korisnik nema aktivnu smenu. Prikazuje ekran za pok
 - Svaki red: select proizvoda (prikazuje trenutno stanje), input količine, input napomene
 - Grupna validacija svih redova pre slanja
 - `POST /inventory/purchase` → redirect na `/inventory`
+
+### `<PrinterSettingsPage>` **[ADMIN]** (Faza 5)
+
+**Izvor:** `src/pages/admin/PrinterSettingsPage.tsx`
+
+**Ruta:** `/admin/settings/printer` (dostupno i iz sidebar navigacije pod "Štampač")
+
+Admin forma za konfiguraciju POS štampača:
+- **Tip konekcije** — select: `disabled` / `network` / `usb`
+- **IP adresa / putanja** — prikazuje se samo kad tip nije `disabled`
+- **Port** — prikazuje se samo za `network` tip (default: 9100)
+- **Širina papira** — radio: 48 / 80 karaktera
+- **Podaci o kafeu** — naziv, adresa, PIB (štampaju se u zaglavlju računa)
+- **"Test štampe"** — `POST /print/test` → prikazuje toast sa rezultatom
+- **"Sačuvaj"** — `PUT /settings/printer` → upsert svih vrednosti
+
+`StatusBadge` komponenta prikazuje trenutni status štampača (disabled/usb/network) u zaglavlju stranice.
+
+---
 
 ### `<PlaceholderPage>`
 
@@ -1362,6 +1537,17 @@ interface TableWithStatus extends TableUnit { openBillTotal: number; openBillId:
 interface Bill      { id, tableId, shiftId, userId, status, discountPercent, total, whiteTotal, blackTotal, createdAt, paidAt, tableUnit, user, items }
 interface BillItem  { id, billId, productId, quantity, unitPrice, color, discount, product: { id, nameSr, nameEn, price, unit, normQuantity } }
 interface NavItem   { labelKey, path, icon, roles, divider? }
+
+// Faza 5 — Podešavanja štampača
+interface PrinterSettings {
+  printer_type:  'usb' | 'network' | 'disabled'
+  printer_path:  string   // IP adresa ili putanja uređaja
+  printer_port:  string   // TCP port kao string (default: '9100')
+  printer_width: '48' | '80'
+  cafe_name:     string
+  cafe_address:  string
+  cafe_pib:      string
+}
 ```
 
 **Tipovi iz API klijenata** (`src/api/`):
@@ -1621,6 +1807,40 @@ Preferencija se čuva u `localStorage` pod ključem `kafic_language`.
 | **products (novi ključevi)**           |                                      |                                       |
 | `products.normQuantity`                | Normativ                             | Norm Quantity                         |
 | `products.normQuantity_hint`           | Količina koja se oduzima iz zaliha pri svakoj prodaji | Amount deducted from stock per sale |
+| **printer** (Faza 5)                   |                                      |                                       |
+| `nav.printer`                          | Štampač                              | Printer                               |
+| `printer.title`                        | Podešavanja štampača                 | Printer Settings                      |
+| `printer.subtitle`                     | Konfiguracija POS termalnog štampača | POS thermal printer configuration     |
+| `printer.type_label`                   | Tip konekcije                        | Connection Type                       |
+| `printer.type_usb`                     | USB                                  | USB                                   |
+| `printer.type_network`                 | Network (TCP/IP)                     | Network (TCP/IP)                      |
+| `printer.type_disabled`                | Onesposobljen                        | Disabled                              |
+| `printer.path_label`                   | IP adresa / Putanja uređaja          | IP Address / Device Path              |
+| `printer.port_label`                   | Port                                 | Port                                  |
+| `printer.width_label`                  | Širina papira                        | Paper Width                           |
+| `printer.width_48`                     | 48 karaktera (80mm)                  | 48 characters (80mm)                  |
+| `printer.width_80`                     | 80 karaktera (80mm/wide)             | 80 characters (80mm/wide)             |
+| `printer.cafe_name_label`              | Naziv kafića                         | Cafe Name                             |
+| `printer.cafe_address_label`           | Adresa                               | Address                               |
+| `printer.cafe_pib_label`               | PIB broj                             | Tax ID (PIB)                          |
+| `printer.save`                         | Sačuvaj podešavanja                  | Save Settings                         |
+| `printer.test_print`                   | Test štampe                          | Test Print                            |
+| `printer.success_save`                 | Podešavanja su sačuvana.             | Settings saved.                       |
+| `printer.success_test`                 | Test stranica je odštampana.         | Test page printed.                    |
+| `printer.error_save`                   | Greška pri čuvanju podešavanja.      | Error saving settings.                |
+| `printer.error_test`                   | Greška štampača. Proverite konekciju. | Printer error. Check the connection. |
+| `printer.status_disabled`              | Onesposobljen — konfigurišite...     | Disabled — configure the printer...   |
+| `printer.status_usb`                   | USB — direktna konekcija             | USB — direct connection               |
+| `printer.status_network`               | Network — TCP/IP konekcija           | Network — TCP/IP connection           |
+| `printer.reprint`                      | Ponovo štampaj                       | Reprint                               |
+| `printer.reprint_success`              | Račun je ponovo odštampan.           | Receipt reprinted.                    |
+| `printer.reprint_error`                | Greška pri ponovnoj štampi.          | Error reprinting receipt.             |
+| `printer.auto_print_warning`           | Štampač nije dostupan. Koristite 'Ponovo štampaj'... | Printer unavailable. Use 'Reprint'... |
+| `printer.section_connection`           | Konekcija                            | Connection                            |
+| `printer.section_paper`                | Papir i format                       | Paper & Format                        |
+| `printer.section_cafe`                 | Podaci o kafeu (za zaglavlje računa) | Cafe Info (for receipt header)        |
+| `dashboard.admin_printer_title`        | Štampač                              | Printer                               |
+| `dashboard.admin_printer_desc`         | Konfiguracija POS termalnog štampača | POS thermal printer configuration     |
 
 ---
 

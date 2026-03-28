@@ -28,7 +28,8 @@
     "inventory": "Inventar",
     "settings": "Podešavanja",
     "logout": "Odjava",
-    "tableLayout": "Raspored stolova"
+    "tableLayout": "Raspored stolova",
+    "printer": "Štampač"
   },
 
   "common": {
@@ -76,7 +77,9 @@
     "admin_reports_title": "Izveštaji",
     "admin_reports_desc": "Dnevni, nedeljni i mesečni izveštaji",
     "admin_settings_title": "Podešavanja",
-    "admin_settings_desc": "Sistemska podešavanja kafića"
+    "admin_settings_desc": "Sistemska podešavanja kafića",
+    "admin_printer_title": "Štampač",
+    "admin_printer_desc": "Konfiguracija POS termalnog štampača"
   },
 
   "roles": {
@@ -338,6 +341,51 @@
     "error_duplicate": "Sto sa ovim nazivom već postoji u ovoj zoni.",
     "error_has_open_bills": "Sto ima otvorene račune i ne može biti obrisan.",
     "error_reset": "Greška pri resetovanju pozicija."
+  },
+
+  "printer": {
+    "title": "Podešavanja štampača",
+    "subtitle": "Konfiguracija POS termalnog štampača",
+    "type_label": "Tip konekcije",
+    "type_usb": "USB",
+    "type_network": "Network (TCP/IP)",
+    "type_disabled": "Onesposobljen",
+    "path_label": "IP adresa / Putanja uređaja",
+    "path_placeholder_network": "npr. 192.168.1.100",
+    "path_placeholder_usb": "npr. /dev/usb/lp0 ili \\\\.\\USB001",
+    "port_label": "Port",
+    "port_placeholder": "9100",
+    "width_label": "Širina papira",
+    "width_48": "48 karaktera (80mm)",
+    "width_80": "80 karaktera (80mm/wide)",
+    "cafe_name_label": "Naziv kafića",
+    "cafe_name_placeholder": "Kafić Pasaz",
+    "cafe_address_label": "Adresa",
+    "cafe_address_placeholder": "Ulica i broj, Grad",
+    "cafe_pib_label": "PIB broj",
+    "cafe_pib_placeholder": "npr. 123456789",
+    "save": "Sačuvaj podešavanja",
+    "saving": "Čuvanje...",
+    "test_print": "Test štampe",
+    "testing": "Štampanje...",
+    "success_save": "Podešavanja su sačuvana.",
+    "success_test": "Test stranica je odštampana.",
+    "error_save": "Greška pri čuvanju podešavanja.",
+    "error_test": "Greška štampača. Proverite konekciju.",
+    "error_load": "Greška pri učitavanju podešavanja.",
+    "status_title": "Status štampača",
+    "status_disabled": "Onesposobljen — konfigurišite štampač pre upotrebe",
+    "status_usb": "USB — direktna konekcija",
+    "status_network": "Network — TCP/IP konekcija",
+    "reprint": "Ponovo štampaj",
+    "reprinting": "Štampanje...",
+    "reprint_success": "Račun je ponovo odštampan.",
+    "reprint_error": "Greška pri ponovnoj štampi.",
+    "auto_print_error": "Naplata uspešna, ali štampa nije uspela: {{error}}",
+    "auto_print_warning": "Štampač nije dostupan. Koristite 'Ponovo štampaj' kada se štampač poveže.",
+    "section_connection": "Konekcija",
+    "section_paper": "Papir i format",
+    "section_cafe": "Podaci o kafeu (za zaglavlje računa)"
   },
 
   "shifts": {
