@@ -408,6 +408,33 @@
       "title": "Shift Not Active",
       "message": "You must start a shift to access this page",
       "startButton": "Start Shift"
+    },
+    "summary": {
+      "title": "Shift Report",
+      "subtitle": "Revenue and sales overview before closing the shift",
+      "back": "Back to Dashboard",
+      "loading": "Loading report...",
+      "error_load": "Error loading shift report",
+      "error_no_shift": "No active shift. Start a shift before viewing the report.",
+      "open_bills_warning": "You have {{count}} open bills. Close them before ending the shift.",
+      "open_bills_warning_one": "You have 1 open bill. Close it before ending the shift.",
+      "section_revenue": "Shift Revenue",
+      "section_sales": "Sales by Product",
+      "card_total": "Total Revenue",
+      "card_white": "Total WHITE",
+      "card_black": "Total BLACK",
+      "card_paid_count": "Paid Bills",
+      "card_cancelled_count": "Cancelled Bills",
+      "card_average": "Average Bill",
+      "col_product": "Product",
+      "col_category": "Category",
+      "col_sold_total": "Sold (units)",
+      "col_sold_white": "White (units)",
+      "col_sold_black": "Black (units)",
+      "col_amount": "Amount (RSD)",
+      "row_total": "TOTAL",
+      "no_sales": "No paid items in this shift.",
+      "currency": "RSD"
     }
   }
 }

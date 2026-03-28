@@ -44,6 +44,9 @@ import { TablesPage }      from './pages/TablesPage'
 import { TableLayoutPage } from './pages/admin/TableLayoutPage'
 import { BillPage }        from './pages/BillPage'
 
+// Stranice — Faza 6 / Pages — Phase 6
+import { ShiftSummaryPage } from './pages/ShiftSummaryPage'
+
 // Placeholder stranice za buduće faze / Placeholder pages for future phases
 import { PlaceholderPage } from './pages/PlaceholderPage'
 
@@ -138,6 +141,18 @@ function App() {
               <ProtectedRoute>
                 <MainLayout>
                   <PlaceholderPage titleKey="nav.shifts" icon="⏰" />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Sumarni izveštaj smene — Faza 6.1 / Shift summary report — Phase 6.1 */}
+          <Route
+            path="/shift/summary"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <ShiftSummaryPage />
                 </MainLayout>
               </ProtectedRoute>
             }

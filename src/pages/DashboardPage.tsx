@@ -67,7 +67,7 @@ export function DashboardPage() {
   const { t }                                  = useTranslation()
   const navigate                               = useNavigate()
   const { user }                               = useAuth()
-  const { activeShift, isProcessing, startShift, endShift } = useShift()
+  const { activeShift, isProcessing, startShift } = useShift()
 
   if (!user) return null
 
@@ -161,7 +161,7 @@ export function DashboardPage() {
             </p>
           </div>
           <button
-            onClick={() => activeShift ? void endShift() : void startShift()}
+            onClick={() => activeShift ? navigate('/shift/summary') : void startShift()}
             disabled={isProcessing}
             className={`
               px-4 py-2 font-medium rounded-xl

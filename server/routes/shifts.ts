@@ -4,19 +4,22 @@
  *              Routes for managing waiter shifts.
  *
  * Endpointi / Endpoints:
- * POST /api/v1/shifts/start   → započni smenu / start shift
- * POST /api/v1/shifts/end     → završi smenu / end shift
- * GET  /api/v1/shifts/active  → aktivna smena trenutnog korisnika / active shift for current user
- * GET  /api/v1/shifts/history → istorija smena / shift history
+ * POST /api/v1/shifts/start        → započni smenu / start shift
+ * POST /api/v1/shifts/end          → završi smenu / end shift
+ * GET  /api/v1/shifts/active       → aktivna smena trenutnog korisnika / active shift for current user
+ * GET  /api/v1/shifts/history      → istorija smena / shift history
+ * GET  /api/v1/shifts/:id/summary  → sumarni izveštaj smene / shift summary report
  */
 
 import { Router, Request, Response, NextFunction } from 'express'
 import { requireAuth }  from '../middleware/auth'
+import { AppError }     from '../middleware/errorHandler'
 import {
   startShift,
   endShift,
   getActiveShift,
   getShiftHistory,
+  getShiftSummary,
 } from '../services/shiftService'
 
 export const shiftsRouter = Router()
@@ -78,5 +81,28 @@ shiftsRouter.get('/history', async (req: Request, res: Response, next: NextFunct
     const limit  = req.query['limit'] ? parseInt(req.query['limit'] as string, 10) : 20
     const shifts = await getShiftHistory(userId, isNaN(limit) ? 20 : limit)
     res.json({ success: true, data: shifts })
+  } catch (e) { next(e) }
+})
+
+/**
+ * GET /api/v1/shifts/:id/summary
+ * Vraća sumarni izveštaj smene — promet i prodaja po artiklima.
+ * Returns shift summary — revenue and sales by product.
+ *
+ * Ne zatvara smenu. / Does NOT close the shift.
+ *
+ * @param {string} id - ID smene / Shift ID
+ */
+shiftsRouter.get('/:id/summary', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const shiftId = parseInt(req.params['id'], 10)
+    if (isNaN(shiftId)) {
+      throw new AppError(
+        'Nevažeći ID smene / Invalid shift ID',
+        400, 'INVALID_SHIFT_ID'
+      )
+    }
+    const summary = await getShiftSummary(shiftId)
+    res.json({ success: true, data: summary })
   } catch (e) { next(e) }
 })

@@ -408,6 +408,33 @@
       "title": "Smena nije aktivna",
       "message": "Morate započeti smenu da biste pristupili ovoj stranici",
       "startButton": "Započni smenu"
+    },
+    "summary": {
+      "title": "Izveštaj smene",
+      "subtitle": "Pregled prometa i prodaje pre završetka smene",
+      "back": "Nazad na kontrolnu tablu",
+      "loading": "Učitavanje izveštaja...",
+      "error_load": "Greška pri učitavanju izveštaja smene",
+      "error_no_shift": "Nema aktivne smene. Pokrenite smenu pre pregleda izveštaja.",
+      "open_bills_warning": "Imate {{count}} otvorenih računa. Zatvorite ih pre završetka smene.",
+      "open_bills_warning_one": "Imate 1 otvoren račun. Zatvorite ga pre završetka smene.",
+      "section_revenue": "Promet smene",
+      "section_sales": "Prodaja po artiklima",
+      "card_total": "Ukupan promet",
+      "card_white": "Ukupno BELO",
+      "card_black": "Ukupno CRNO",
+      "card_paid_count": "Naplaćenih računa",
+      "card_cancelled_count": "Otkazanih računa",
+      "card_average": "Prosečan račun",
+      "col_product": "Proizvod",
+      "col_category": "Kategorija",
+      "col_sold_total": "Prodato (kom)",
+      "col_sold_white": "Belo (kom)",
+      "col_sold_black": "Crno (kom)",
+      "col_amount": "Iznos (RSD)",
+      "row_total": "UKUPNO",
+      "no_sales": "U ovoj smeni nema naplaćenih stavki.",
+      "currency": "RSD"
     }
   }
 }

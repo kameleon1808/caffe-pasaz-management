@@ -262,6 +262,60 @@ export interface Bill {
 }
 
 // ==============================================================================
+// SUMARNI IZVEŠTAJ SMENE / SHIFT SUMMARY
+// ==============================================================================
+
+/**
+ * Prodaja jednog proizvoda u smeni (agregirano).
+ * Sales of one product during a shift (aggregated).
+ */
+export interface ShiftSalesItem {
+  productId:   number
+  nameSr:      string
+  nameEn:      string
+  categorySr:  string
+  categoryEn:  string
+  /** Ukupno prodato (kom) / Total sold (units) */
+  soldTotal:   number
+  /** Prodato kao BELO (kom) / Sold as WHITE (units) */
+  soldWhite:   number
+  /** Prodato kao CRNO (kom) / Sold as BLACK (units) */
+  soldBlack:   number
+  /** Ukupan prihod od ovog proizvoda (RSD) / Total revenue from this product (RSD) */
+  totalAmount: number
+}
+
+/**
+ * Promet smene.
+ * Shift revenue.
+ */
+export interface ShiftRevenue {
+  /** Ukupan prihod (RSD) / Total revenue (RSD) */
+  total:          number
+  /** Ukupno BELO (RSD) / Total WHITE (RSD) */
+  white:          number
+  /** Ukupno CRNO (RSD) / Total BLACK (RSD) */
+  black:          number
+  /** Broj naplaćenih računa / Number of paid bills */
+  paidCount:      number
+  /** Broj otkazanih računa / Number of cancelled bills */
+  cancelledCount: number
+  /** Prosečan iznos naplaćenog računa / Average paid bill amount */
+  averageBill:    number
+}
+
+/**
+ * Sumarni izveštaj smene.
+ * Shift summary report.
+ */
+export interface ShiftSummary {
+  /** Broj otvorenih računa u ovoj smeni / Number of open bills in this shift */
+  openBillsCount: number
+  revenue:        ShiftRevenue
+  salesByProduct: ShiftSalesItem[]
+}
+
+// ==============================================================================
 // PODEŠAVANJA / SETTINGS
 // ==============================================================================
 

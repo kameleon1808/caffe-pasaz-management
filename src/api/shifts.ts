@@ -4,8 +4,8 @@
  *              API client for shift management.
  */
 
-import { getAuthHeader } from '../utils/token'
-import type { Shift }    from '../types'
+import { getAuthHeader }              from '../utils/token'
+import type { Shift, ShiftSummary }  from '../types'
 
 const BASE = 'http://localhost:3001/api/v1/shifts'
 
@@ -82,4 +82,17 @@ export async function getActiveShift(): Promise<Shift | null> {
  */
 export function getShiftHistory(limit = 20): Promise<Shift[]> {
   return req<Shift[]>(`${BASE}/history?limit=${limit}`)
+}
+
+/**
+ * Vraća sumarni izveštaj smene — promet i prodaja po artiklima.
+ * Returns the shift summary report — revenue and sales by product.
+ *
+ * Ne zatvara smenu. / Does NOT close the shift.
+ *
+ * @param {number} shiftId - ID smene / Shift ID
+ * @returns {Promise<ShiftSummary>} Sumarni izveštaj / Summary report
+ */
+export function getShiftSummary(shiftId: number): Promise<ShiftSummary> {
+  return req<ShiftSummary>(`${BASE}/${shiftId}/summary`)
 }
