@@ -13,6 +13,16 @@
  */
 
 import { contextBridge, ipcRenderer } from 'electron'
+import type { BackupInfo } from './backupService'
+
+// ─── Tipovi / Types ────────────────────────────────────────────────────────────
+
+/** Rezultat IPC poziva / IPC call result */
+interface IpcResult<T = void> {
+  success: boolean
+  data?:   T
+  error?:  string
+}
 
 /**
  * Tip za API izložen renderer procesu.
@@ -29,29 +39,55 @@ export interface ElectronAPI {
   maximizeWindow: () => void
   /** Zatvaranje prozora / Window close */
   closeWindow: () => void
+  /** Logovanje greške u fajl (iz ErrorBoundary) / Log error to file (from ErrorBoundary) */
+  logError: (payload: { message: string; stack?: string; componentStack?: string }) => Promise<void>
+
+  /** Backup operacije / Backup operations */
+  backup: {
+    /** Kreira novi backup / Creates a new backup */
+    create:     () => Promise<IpcResult<BackupInfo>>
+    /** Lista backup fajlova (max 10 prikazano, svi se čuvaju) / List backup files */
+    list:       () => Promise<IpcResult<BackupInfo[]>>
+    /** Restore-uje bazu iz backup fajla i restartuje app / Restore database and restart app */
+    restore:    (backupPath: string) => Promise<IpcResult>
+    /** Vraća trenutni backup folder / Returns current backup folder */
+    getFolder:  () => Promise<IpcResult<string>>
+    /** Menja backup folder / Changes backup folder */
+    setFolder:  (folderPath: string) => Promise<IpcResult>
+    /** Otvara OS folder picker dijalog / Opens OS folder picker dialog */
+    pickFolder: () => Promise<IpcResult<string>>
+  }
 }
 
-// Izlažemo API renderer procesu kroz contextBridge
-// We expose the API to the renderer process through contextBridge
+// ─── API objekat / API object ─────────────────────────────────────────────────
+
+const electronAPI: ElectronAPI = {
+  getAppVersion:  () => ipcRenderer.invoke('get-app-version'),
+  getPlatform:    () => process.platform,
+  minimizeWindow: () => ipcRenderer.send('window-minimize'),
+  maximizeWindow: () => ipcRenderer.send('window-maximize'),
+  closeWindow:    () => ipcRenderer.send('window-close'),
+  logError:       (payload) => ipcRenderer.invoke('log-error', payload),
+
+  backup: {
+    create:     ()           => ipcRenderer.invoke('backup-create'),
+    list:       ()           => ipcRenderer.invoke('backup-list'),
+    restore:    (backupPath) => ipcRenderer.invoke('backup-restore', backupPath),
+    getFolder:  ()           => ipcRenderer.invoke('backup-get-folder'),
+    setFolder:  (folderPath) => ipcRenderer.invoke('backup-set-folder', folderPath),
+    pickFolder: ()           => ipcRenderer.invoke('backup-pick-folder'),
+  },
+}
+
+// ─── Izlaganje API-ja / Expose API ────────────────────────────────────────────
+
 if (process.contextIsolated) {
   try {
-    contextBridge.exposeInMainWorld('electronAPI', {
-      getAppVersion: () => ipcRenderer.invoke('get-app-version'),
-      getPlatform:   () => process.platform,
-      minimizeWindow: () => ipcRenderer.send('window-minimize'),
-      maximizeWindow: () => ipcRenderer.send('window-maximize'),
-      closeWindow:    () => ipcRenderer.send('window-close')
-    } satisfies ElectronAPI)
+    contextBridge.exposeInMainWorld('electronAPI', electronAPI)
   } catch (error) {
     console.error('[Preload] Greška pri izlaganju API-ja / Error exposing API:', error)
   }
 } else {
   // Fallback za okruženja bez context isolation (ne preporučuje se / not recommended)
-  ;(window as unknown as Record<string, unknown>)['electronAPI'] = {
-    getAppVersion: () => ipcRenderer.invoke('get-app-version'),
-    getPlatform:   () => process.platform,
-    minimizeWindow: () => ipcRenderer.send('window-minimize'),
-    maximizeWindow: () => ipcRenderer.send('window-maximize'),
-    closeWindow:    () => ipcRenderer.send('window-close')
-  }
+  ;(window as unknown as Record<string, unknown>)['electronAPI'] = electronAPI
 }

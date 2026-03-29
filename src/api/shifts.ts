@@ -4,7 +4,7 @@
  *              API client for shift management.
  */
 
-import { getAuthHeader }              from '../utils/token'
+import { authRequest } from './apiClient'
 import type {
   Shift,
   ShiftSummary,
@@ -12,40 +12,6 @@ import type {
   InventoryAdjustData,
   ShiftListResult,
 } from '../types'
-
-const BASE = 'http://localhost:3001/api/v1/shifts'
-
-/** Pomoćna funkcija za autorizovane zahteve / Helper for authorized requests */
-async function req<T>(url: string, options: RequestInit = {}): Promise<T> {
-  const authHeader = getAuthHeader()
-  if (!authHeader) throw new Error('Nije autentifikovan / Not authenticated')
-
-  const res  = await fetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization:  authHeader,
-      ...options.headers,
-    },
-  })
-  const json = await res.json() as {
-    success: boolean
-    data?: T
-    message?: string
-    error?: { code: string; message: string; details?: unknown }
-  }
-
-  if (!res.ok || !json.success) {
-    const err = new Error(json.error?.message ?? `HTTP ${res.status}`) as Error & {
-      code?: string
-      details?: unknown
-    }
-    err.code    = json.error?.code
-    err.details = json.error?.details
-    throw err
-  }
-  return json.data as T
-}
 
 /**
  * Započinje novu smenu za trenutnog korisnika.
@@ -55,7 +21,7 @@ async function req<T>(url: string, options: RequestInit = {}): Promise<T> {
  * @throws Ako već postoji aktivna smena / If an active shift already exists
  */
 export function startShift(): Promise<Shift> {
-  return req<Shift>(`${BASE}/start`, { method: 'POST' })
+  return authRequest<Shift>('/shifts/start', { method: 'POST' })
 }
 
 /**
@@ -66,7 +32,7 @@ export function startShift(): Promise<Shift> {
  * @throws Ako nema aktivne smene ili ima otvorenih računa / If no active shift or open bills exist
  */
 export function endShift(): Promise<Shift> {
-  return req<Shift>(`${BASE}/end`, { method: 'POST' })
+  return authRequest<Shift>('/shifts/end', { method: 'POST' })
 }
 
 /**
@@ -76,7 +42,7 @@ export function endShift(): Promise<Shift> {
  * @returns {Promise<Shift | null>} Aktivna smena ili null / Active shift or null
  */
 export async function getActiveShift(): Promise<Shift | null> {
-  return req<Shift | null>(`${BASE}/active`)
+  return authRequest<Shift | null>('/shifts/active')
 }
 
 /**
@@ -87,7 +53,7 @@ export async function getActiveShift(): Promise<Shift | null> {
  * @returns {Promise<Shift[]>} Lista smena / List of shifts
  */
 export function getShiftHistory(limit = 20): Promise<Shift[]> {
-  return req<Shift[]>(`${BASE}/history?limit=${limit}`)
+  return authRequest<Shift[]>(`/shifts/history?limit=${limit}`)
 }
 
 /**
@@ -100,7 +66,7 @@ export function getShiftHistory(limit = 20): Promise<Shift[]> {
  * @returns {Promise<ShiftSummary>} Sumarni izveštaj / Summary report
  */
 export function getShiftSummary(shiftId: number): Promise<ShiftSummary> {
-  return req<ShiftSummary>(`${BASE}/${shiftId}/summary`)
+  return authRequest<ShiftSummary>(`/shifts/${shiftId}/summary`)
 }
 
 /**
@@ -111,7 +77,7 @@ export function getShiftSummary(shiftId: number): Promise<ShiftSummary> {
  * @returns {Promise<ShiftInventorySummary>}
  */
 export function getShiftInventorySummary(shiftId: number): Promise<ShiftInventorySummary> {
-  return req<ShiftInventorySummary>(`${BASE}/${shiftId}/inventory-summary`)
+  return authRequest<ShiftInventorySummary>(`/shifts/${shiftId}/inventory-summary`)
 }
 
 /**
@@ -126,7 +92,7 @@ export function adjustShiftInventory(
   shiftId: number,
   data:    InventoryAdjustData
 ): Promise<void> {
-  return req<void>(`${BASE}/${shiftId}/inventory-adjust`, {
+  return authRequest<void>(`/shifts/${shiftId}/inventory-adjust`, {
     method: 'POST',
     body:   JSON.stringify(data),
   })
@@ -140,7 +106,7 @@ export function adjustShiftInventory(
  * @returns {Promise<Shift>} Završena smena / Ended shift
  */
 export function endShiftById(shiftId: number): Promise<Shift> {
-  return req<Shift>(`${BASE}/${shiftId}/end`, {
+  return authRequest<Shift>(`/shifts/${shiftId}/end`, {
     method: 'POST',
     body:   JSON.stringify({ confirm: true }),
   })
@@ -154,7 +120,7 @@ export function endShiftById(shiftId: number): Promise<Shift> {
  * @returns {Promise<void>}
  */
 export function printShiftSummary(shiftId: number): Promise<void> {
-  return req<void>(`${BASE}/${shiftId}/print-summary`, { method: 'POST' })
+  return authRequest<void>(`/shifts/${shiftId}/print-summary`, { method: 'POST' })
 }
 
 /**
@@ -178,5 +144,5 @@ export function getShiftList(params: {
   if (params.page     !== undefined) qs.set('page',     String(params.page))
   if (params.limit    !== undefined) qs.set('limit',    String(params.limit))
   const query = qs.toString()
-  return req<ShiftListResult>(`${BASE}${query ? `?${query}` : ''}`)
+  return authRequest<ShiftListResult>(`/shifts${query ? `?${query}` : ''}`)
 }

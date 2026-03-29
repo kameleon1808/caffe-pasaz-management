@@ -698,6 +698,60 @@
     }
   },
 
+  "backup": {
+    "title": "Database Backup",
+    "subtitle": "Manage data backup copies",
+    "create": "Create Backup Now",
+    "creating": "Creating...",
+    "folder_label": "Backup Folder",
+    "folder_hint": "Location where backup files are stored",
+    "change_folder": "Change Folder",
+    "list_title": "Last 10 Backups",
+    "list_empty": "No backups found",
+    "list_loading": "Loading list...",
+    "restore": "Restore from Backup",
+    "restore_confirm_title": "Restore from Backup",
+    "restore_confirm_message": "This will REPLACE the current database with data from this backup! The application will restart. Are you sure?",
+    "restore_confirm_btn": "Restore Database",
+    "restoring": "Restoring...",
+    "success_create": "Backup created successfully",
+    "success_restore": "Database restored — application is restarting...",
+    "success_folder": "Backup folder changed",
+    "error_create": "Error creating backup",
+    "error_restore": "Error restoring from backup",
+    "error_folder": "Error setting backup folder",
+    "error_list": "Error loading backup list",
+    "size_bytes": "{{size}} B",
+    "size_kb": "{{size}} KB",
+    "size_mb": "{{size}} MB",
+    "auto_backup_note": "An automatic backup is created every time the application closes (last 30 are kept)."
+  },
+
+  "errorBoundary": {
+    "title": "An unexpected error has occurred",
+    "description": "The application encountered a problem it could not resolve. Refresh the page to continue.",
+    "refresh": "Refresh Page",
+    "retry": "Try Again",
+    "details": "Error details"
+  },
+
+  "emptyState": {
+    "default_title": "No data",
+    "default_description": "There are no items to display.",
+    "search_title": "No search results",
+    "search_description": "Try a different search term.",
+    "report_title": "No data for the selected period",
+    "report_description": "Try a different date range.",
+    "loading": "Loading..."
+  },
+
+  "shortcuts": {
+    "hint_refresh": "F5 or Ctrl+R to refresh data",
+    "hint_escape": "Escape to close",
+    "hint_enter": "Enter to confirm",
+    "hint_print": "Ctrl+P to print"
+  },
+
   "adminDashboard": {
     "title": "Admin Dashboard",
     "todayRevenue": "Today's Revenue",

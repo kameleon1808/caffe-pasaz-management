@@ -25,6 +25,7 @@ import { ShiftProvider } from './context/ShiftContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { MainLayout }     from './components/Layout/MainLayout'
 import { Toaster }        from './components/ui/Toaster'
+import { ErrorBoundary }  from './components/ErrorBoundary'
 
 // Stranice / Pages
 import { LoginPage }     from './pages/LoginPage'
@@ -71,6 +72,7 @@ import { PlaceholderPage } from './pages/PlaceholderPage'
  */
 function App() {
   return (
+    <ErrorBoundary>
     <BrowserRouter>
       <ToastProvider>
         <Toaster />
@@ -352,6 +354,7 @@ function App() {
         </AuthProvider>
       </ToastProvider>
     </BrowserRouter>
+    </ErrorBoundary>
   )
 }
 

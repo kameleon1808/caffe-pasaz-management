@@ -4,9 +4,7 @@
  *              API client for user management.
  */
 
-import { getAuthHeader } from '../utils/token'
-
-const BASE = 'http://localhost:3001/api/v1/users'
+import { authRequest } from './apiClient'
 
 /** Korisnik sistema / System user */
 export interface User {
@@ -34,37 +32,12 @@ export interface UpdateUserData {
   password?: string
 }
 
-/** Pomoćna funkcija za autorizovane zahteve / Helper for authorized requests */
-async function req<T>(url: string, options: RequestInit = {}): Promise<T> {
-  const authHeader = getAuthHeader()
-  if (!authHeader) throw new Error('Nije autentifikovan / Not authenticated')
-
-  const res  = await fetch(url, {
-    ...options,
-    headers: { 'Content-Type': 'application/json', Authorization: authHeader, ...options.headers },
-  })
-  const json = await res.json() as {
-    success: boolean
-    data?: T
-    message?: string
-    error?: { code: string; message: string; details?: unknown }
-  }
-
-  if (!res.ok || !json.success) {
-    const err = new Error(json.error?.message ?? `HTTP ${res.status}`) as Error & { code?: string; details?: unknown }
-    err.code    = json.error?.code
-    err.details = json.error?.details
-    throw err
-  }
-  return json.data as T
-}
-
 /**
  * Vraća sve korisnike.
  * Returns all users.
  */
 export const getUsers = (): Promise<User[]> =>
-  req<User[]>(BASE)
+  authRequest<User[]>('/users')
 
 /**
  * Kreira novog korisnika.
@@ -73,7 +46,7 @@ export const getUsers = (): Promise<User[]> =>
  * @param {CreateUserData} data - Podaci za novog korisnika / New user data
  */
 export const createUser = (data: CreateUserData): Promise<User> =>
-  req<User>(BASE, { method: 'POST', body: JSON.stringify(data) })
+  authRequest<User>('/users', { method: 'POST', body: JSON.stringify(data) })
 
 /**
  * Menja podatke korisnika.
@@ -83,7 +56,7 @@ export const createUser = (data: CreateUserData): Promise<User> =>
  * @param {UpdateUserData} data - Polja za ažuriranje / Fields to update
  */
 export const updateUser = (id: number, data: UpdateUserData): Promise<User> =>
-  req<User>(`${BASE}/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+  authRequest<User>(`/users/${id}`, { method: 'PUT', body: JSON.stringify(data) })
 
 /**
  * Deaktivira korisnika (soft delete).
@@ -92,7 +65,7 @@ export const updateUser = (id: number, data: UpdateUserData): Promise<User> =>
  * @param {number} id - ID korisnika / User ID
  */
 export const deactivateUser = (id: number): Promise<void> =>
-  req<void>(`${BASE}/${id}`, { method: 'DELETE' })
+  authRequest<void>(`/users/${id}`, { method: 'DELETE' })
 
 /**
  * Reaktivira prethodno deaktiviranog korisnika.
@@ -101,4 +74,4 @@ export const deactivateUser = (id: number): Promise<void> =>
  * @param {number} id - ID korisnika / User ID
  */
 export const reactivateUser = (id: number): Promise<User> =>
-  req<User>(`${BASE}/${id}/reactivate`, { method: 'PUT' })
+  authRequest<User>(`/users/${id}/reactivate`, { method: 'PUT' })

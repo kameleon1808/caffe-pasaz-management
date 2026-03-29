@@ -10,10 +10,9 @@
  * - PUT  /api/v1/settings/printer  → Čuva podešavanja štampača / Saves printer settings
  */
 
+import { authRequest, API_BASE } from './apiClient'
 import { getToken } from '../utils/token'
 import type { PrinterSettings } from '../types'
-
-const BASE = 'http://localhost:3001/api/v1/settings'
 
 // ─── Tipovi / Types ────────────────────────────────────────────────────────────
 
@@ -39,22 +38,14 @@ export interface CafeSettings {
  * @returns {Promise<CafeSettings>} Podešavanja / Settings
  */
 export async function getSettings(): Promise<CafeSettings> {
-  const res = await fetch(`${BASE}`, {
-    headers: { Authorization: `Bearer ${getToken() ?? ''}` }
-  })
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({})) as { error?: string }
-    throw new Error(body.error ?? 'Greška pri učitavanju podešavanja / Error loading settings')
-  }
-  const json = await res.json() as { success: boolean; data: Record<string, string> }
-  const data = json.data ?? {}
+  const raw = await authRequest<Record<string, string>>('/settings')
   return {
-    cafe_name:           data['cafe_name'],
-    cafe_address:        data['cafe_address'],
-    cafe_pib:            data['cafe_pib'],
-    cafe_phone:          data['cafe_phone'],
-    min_stock_threshold: data['min_stock_threshold'],
-    currency:            data['currency'],
+    cafe_name:           raw['cafe_name'],
+    cafe_address:        raw['cafe_address'],
+    cafe_pib:            raw['cafe_pib'],
+    cafe_phone:          raw['cafe_phone'],
+    min_stock_threshold: raw['min_stock_threshold'],
+    currency:            raw['currency'],
   }
 }
 
@@ -65,25 +56,16 @@ export async function getSettings(): Promise<CafeSettings> {
  * @param {CafeSettings} settings - Podešavanja za čuvanje / Settings to save
  */
 export async function updateSettings(settings: CafeSettings): Promise<void> {
-  // Filtriramo undefined vrednosti / Filter out undefined values
   const clean: Record<string, string> = {}
   for (const [key, value] of Object.entries(settings)) {
     if (value !== undefined && value !== null) {
       clean[key] = String(value)
     }
   }
-  const res = await fetch(`${BASE}`, {
-    method:  'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization:  `Bearer ${getToken() ?? ''}`
-    },
-    body: JSON.stringify({ settings: clean })
+  await authRequest<void>('/settings', {
+    method: 'PUT',
+    body:   JSON.stringify({ settings: clean }),
   })
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({})) as { error?: string }
-    throw new Error(body.error ?? 'Greška pri čuvanju podešavanja / Error saving settings')
-  }
 }
 
 /**
@@ -93,7 +75,7 @@ export async function updateSettings(settings: CafeSettings): Promise<void> {
  * @returns {Promise<PrinterSettings>} Podešavanja štampača / Printer settings
  */
 export async function fetchPrinterSettings(): Promise<PrinterSettings> {
-  const res = await fetch(`${BASE}/printer`, {
+  const res = await fetch(`${API_BASE}/settings/printer`, {
     headers: { Authorization: `Bearer ${getToken()}` }
   })
   if (!res.ok) {
@@ -111,7 +93,7 @@ export async function fetchPrinterSettings(): Promise<PrinterSettings> {
  * @returns {Promise<PrinterSettings>} Ažurirana podešavanja / Updated settings
  */
 export async function savePrinterSettings(data: Partial<PrinterSettings>): Promise<PrinterSettings> {
-  const res = await fetch(`${BASE}/printer`, {
+  const res = await fetch(`${API_BASE}/settings/printer`, {
     method:  'PUT',
     headers: {
       'Content-Type': 'application/json',

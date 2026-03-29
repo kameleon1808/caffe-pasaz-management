@@ -3,6 +3,10 @@
  * @description Dijalog za potvrdu akcije, izgrađen na Modal komponenti.
  *              Confirmation dialog built on top of the Modal component.
  *
+ * Keyboard shortcuts / Prečice na tastaturi:
+ * - Enter:  Potvrdi akciju (ako nije loading) / Confirm action (if not loading)
+ * - Escape: Zatvori dijalog / Close dialog
+ *
  * @example
  * ```tsx
  * <ConfirmDialog
@@ -16,8 +20,9 @@
  * ```
  */
 
-import { useTranslation } from 'react-i18next'
-import { Modal }          from './Modal'
+import { useEffect }         from 'react'
+import { useTranslation }    from 'react-i18next'
+import { Modal }             from './Modal'
 
 /** Varijanta dijaloga / Dialog variant */
 export type ConfirmVariant = 'danger' | 'warning' | 'default'
@@ -50,6 +55,9 @@ const confirmButtonClasses: Record<ConfirmVariant, string> = {
 /**
  * Dijalog za potvrdu (brisanje, opasna akcija).
  * Confirmation dialog (delete, dangerous action).
+ *
+ * Podržava Enter za potvrdu i Escape za zatvaranje.
+ * Supports Enter to confirm and Escape to close.
  */
 export function ConfirmDialog({
   open,
@@ -62,6 +70,19 @@ export function ConfirmDialog({
   loading = false,
 }: ConfirmDialogProps) {
   const { t } = useTranslation()
+
+  // Enter taster za potvrdu / Enter key to confirm
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && !loading) {
+        e.preventDefault()
+        onConfirm()
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [open, loading, onConfirm])
 
   return (
     <Modal open={open} onClose={onClose} title={title} size="sm" hideClose={loading}>
@@ -77,6 +98,7 @@ export function ConfirmDialog({
         <button
           onClick={onConfirm}
           disabled={loading}
+          autoFocus
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${confirmButtonClasses[variant]}`}
         >
           {loading ? t('common.loading') : (confirmLabel ?? t('common.confirm'))}

@@ -7,9 +7,7 @@
  * All functions return typed data or throw on non-2xx responses.
  */
 
-import { getAuthHeader } from '../utils/token'
-
-const BASE = 'http://localhost:3001/api/v1/dashboard'
+import { authRequest } from './apiClient'
 
 // ─── Interfejsi / Interfaces ──────────────────────────────────────────────────
 
@@ -64,17 +62,5 @@ export interface DashboardData {
  * @throws {Error} Ako zahtev ne uspe / If the request fails
  */
 export async function getDashboardStats(): Promise<DashboardData> {
-  const authHeader = getAuthHeader()
-  if (!authHeader) throw new Error('Not authenticated')
-
-  const res = await fetch(BASE, {
-    headers: { Authorization: authHeader },
-  })
-
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({})) as { error?: string }
-    throw new Error(body.error ?? `HTTP ${res.status}`)
-  }
-
-  return res.json() as Promise<DashboardData>
+  return authRequest<DashboardData>('/dashboard')
 }

@@ -19,6 +19,12 @@
 10. [Internacionalizacija — Svi ključevi](#internacionalizacija--svi-ključevi)
 11. [Upravljanje tokenima](#upravljanje-tokenima)
 12. [Error Handling Pattern](#error-handling-pattern)
+13. [Centralizovani API Klijent (Faza 8.1)](#centralizovani-api-klijent-faza-81)
+14. [Backup Sistem (Faza 8.2)](#backup-sistem-faza-82)
+15. [Logovanje — electron-log (Faza 8.2)](#logovanje--electron-log-faza-82)
+16. [Keyboard Shortcuts (Faza 8.1)](#keyboard-shortcuts-faza-81)
+17. [Skeleton Loaderi (Faza 8.1)](#skeleton-loaderi-faza-81)
+18. [Empty State Komponenta (Faza 8.1)](#empty-state-komponenta-faza-81)
 
 ---
 
@@ -27,8 +33,9 @@
 ```
 Electron Main Process
 │
-├── electron/main.ts         ← startuje Express server, kreira BrowserWindow
-├── electron/preload.ts      ← contextBridge: main ↔ renderer
+├── electron/main.ts         ← startuje Express server, kreira BrowserWindow, IPC handleri, auto-backup
+├── electron/preload.ts      ← contextBridge: main ↔ renderer (backup API + logError)
+├── electron/backupService.ts ← backup/restore SQLite baze, rotacija, konfiguracija foldera (Faza 8.2)
 │
 ├── server/index.ts          ← createApp() + startServer() → port 3001
 │   ├── server/lib/prisma.ts ← singleton PrismaClient (deli se između servisa)
@@ -77,8 +84,10 @@ Electron Renderer Process (Vite → React)
 ├── src/hooks/
 │   ├── useAuth.ts
 │   ├── useToast.ts
-│   └── useShift.ts           ← pristup ShiftContext-u                      (Faza 3)
+│   ├── useShift.ts           ← pristup ShiftContext-u                      (Faza 3)
+│   └── useKeyboardShortcuts.ts ← F5/Ctrl+R, Escape, Ctrl+P shortcuti     (Faza 8.1)
 ├── src/api/                 ← fetch klijenti → http://localhost:3001
+│   ├── apiClient.ts          ← centralizovani klijent, tipizovane greške, retry (Faza 8.1)
 │   ├── auth.ts
 │   ├── categories.ts
 │   ├── products.ts
@@ -94,11 +103,13 @@ Electron Renderer Process (Vite → React)
 │   ├── users.ts              ← getUsers, createUser, updateUser, deactivateUser, reactivateUser (Faza 7.1)
 │   ├── salaries.ts           ← getSalaries, createSalary                  (Faza 7.1)
 │   ├── reports.ts            ← getDailyReport, getWeeklyReport, getMonthlyReport, getCustomReport (Faza 7.2)
-│   └── dashboard.ts          ← getDashboardStats                           (Faza 7.4)
+│   ├── dashboard.ts          ← getDashboardStats                           (Faza 7.4)
+│   └── backup.ts             ← createBackup, listBackups, restoreBackup, getBackupFolder (Faza 8.2)
 ├── src/components/
 │   ├── Layout/              ← MainLayout, Sidebar, Header
 │   ├── ProtectedRoute.tsx
 │   ├── ShiftGuard.tsx        ← blokira /tables bez aktivne smene           (Faza 3)
+│   ├── ErrorBoundary.tsx     ← hvata render greške, log u fajl, refresh UI (Faza 8.1)
 │   ├── LanguageSwitcher.tsx
 │   ├── reports/             ← deljive komponente za izveštaje (Faza 7.2)
 │   │   ├── ReportSummaryCards.tsx ← 5 kartica prometa
@@ -106,11 +117,13 @@ Electron Renderer Process (Vite → React)
 │   │   └── ComparisonBadge.tsx    ← zeleni/crveni % poređenja
 │   └── ui/                  ← biblioteka za ponovnu upotrebu
 │       ├── Modal.tsx
-│       ├── ConfirmDialog.tsx
-│       ├── Toaster.tsx
+│       ├── ConfirmDialog.tsx  ← Enter key confirm, loading state           (Faza 8.1)
+│       ├── Toaster.tsx        ← slide-in animacija, progress bar, max 3   (Faza 8.1)
 │       ├── Badge.tsx
 │       ├── FormField.tsx
-│       └── DataTable.tsx
+│       ├── DataTable.tsx
+│       ├── SkeletonLoader.tsx ← TableSkeleton, CardSkeleton, FullscreenLoader (Faza 8.1)
+│       └── EmptyState.tsx     ← default/search/report/error varijante     (Faza 8.1)
 └── src/pages/
     ├── LoginPage.tsx
     ├── DashboardPage.tsx
@@ -2456,17 +2469,183 @@ try {
 }
 ```
 
-**Frontend (API klijent):**
+**Frontend (API klijent) — Faza 8.1+:**
 ```typescript
-// src/api/categories.ts — req() automatski baca Error sa .code poljem
-async function req<T>(url: string, options: RequestInit = {}): Promise<T> {
-  const res  = await fetch(url, { ...options, headers: { Authorization: authHeader, ... } })
-  const json = await res.json()
-  if (!res.ok || !json.success) {
-    const err = new Error(json.error?.message ?? `HTTP ${res.status}`) as Error & { code?: string }
-    err.code = json.error?.code
-    throw err
-  }
-  return json.data as T
+// src/api/categories.ts — koristi centralizovani apiClient umesto lokalnog req()
+import { authRequest } from './apiClient'
+
+export async function getCategories(): Promise<Category[]> {
+  return authRequest<Category[]>('/categories')
 }
+```
+
+Greške se automatski tipizuju u `apiClient.ts`:
+- `ValidationError` (400) · `AuthError` (401) · `ForbiddenError` (403)
+- `NotFoundError` (404) · `ServerError` (5xx) · `NetworkError` (offline/timeout)
+
+Sve podklase `ApiError` imaju `.code: string` i `.statusCode: number` polja.
+
+---
+
+## Centralizovani API Klijent (Faza 8.1)
+
+**Izvor:** `src/api/apiClient.ts`
+
+### Tipizovane greške
+
+| Klasa | Status | Kod |
+|---|---|---|
+| `ValidationError` | 400 | `VALIDATION_ERROR` |
+| `AuthError` | 401 | `UNAUTHORIZED` |
+| `ForbiddenError` | 403 | `FORBIDDEN` |
+| `NotFoundError` | 404 | `NOT_FOUND` |
+| `ServerError` | 5xx | `SERVER_ERROR` |
+| `NetworkError` | 0 | `NETWORK_ERROR` |
+
+### Funkcije
+
+```typescript
+authRequest<T>(path, options?, maxRetries=3): Promise<T>
+// Dodaje Bearer token, ponavlja do 3x za mrežne greške (exp. backoff: 500→1000→2000ms)
+
+publicRequest<T>(path, options?, maxRetries=0): Promise<T>
+// Bez Bearer tokena — samo za /auth/login
+```
+
+### Format odgovora servera
+
+Server vraća **direktno resurs** (bez `{ success, data }` wrappera) za sve rute osim auth:
+```
+Uspeh (2xx):  { id: 1, name: "...", ... }        ← direktan objekat
+Auth uspeh:   { success: true, data: { ... } }   ← auth rute
+Greška (4xx/5xx): { success: false, error: { code: "...", message: "..." } }
+```
+
+`apiClient` automatski detektuje oba formata i vraća ispravan `T`.
+
+---
+
+## Backup Sistem (Faza 8.2)
+
+### Electron IPC kanali
+
+| Kanal | Opis | Parametri | Odgovor |
+|---|---|---|---|
+| `backup-create` | Kreira backup odmah | — | `{ success, data: BackupInfo }` |
+| `backup-list` | Lista backup fajlova | — | `{ success, data: BackupInfo[] }` |
+| `backup-restore` | Restore + restart app | `backupPath: string` | `{ success }` |
+| `backup-get-folder` | Vraća backup folder | — | `{ success, data: string }` |
+| `backup-set-folder` | Menja backup folder | `folderPath: string` | `{ success }` |
+| `backup-pick-folder` | OS folder picker | — | `{ success, data: string }` |
+| `log-error` | Log greška iz ErrorBoundary | `{ message, stack?, componentStack? }` | — |
+
+### BackupInfo tip
+
+```typescript
+interface BackupInfo {
+  filename:  string   // npr. kafic_backup_2026-03-29_14-35.db
+  path:      string   // apsolutna putanja
+  createdAt: string   // ISO string
+  sizeBytes: number
+}
+```
+
+### Putanje
+
+| Lokacija | Putanja |
+|---|---|
+| Backup fajlovi (default) | `~/kafic-backup/` |
+| Backup konfiguracija | `{userData}/backup-config.json` |
+| SQLite baza | `prisma/prisma/dev.db` (razvoj) |
+| Log fajl | `~/kafic-app-logs/app.log` |
+
+### Frontend API (`src/api/backup.ts`)
+
+```typescript
+isBackupAvailable(): boolean          // true ako je u Electron okruženju
+createBackup(): Promise<BackupInfo>
+listBackups(): Promise<BackupInfo[]>
+restoreBackup(path: string): Promise<void>  // app se restartuje automatski
+getBackupFolder(): Promise<string>
+setBackupFolder(path: string): Promise<void>
+pickBackupFolder(): Promise<string | null>  // null ako korisnik otkaže
+```
+
+### Auto-backup
+
+Triggeruje se na `app.on('before-quit')`. Maksimalno 30 backup fajlova (stariji se brišu). Greška pri backup-u je ne-fatalna — aplikacija se svakako zatvara.
+
+---
+
+## Logovanje — electron-log (Faza 8.2)
+
+**Paket:** `electron-log` (u `dependencies`)
+
+```typescript
+// Svi console.log/warn/error u main procesu → fajl + konzola
+Object.assign(console, log.functions)
+```
+
+| Parametar | Vrednost |
+|---|---|
+| Log fajl | `~/kafic-app-logs/app.log` |
+| Max veličina | 5 MB po fajlu |
+| Max fajlova | 5 (rotacija) |
+| Dev nivo | `debug` |
+| Prod nivo | `warn` |
+
+Greške iz renderer procesa (ErrorBoundary) loguju se putem IPC kanala `log-error`.
+
+---
+
+## Keyboard Shortcuts (Faza 8.1)
+
+**Izvor:** `src/hooks/useKeyboardShortcuts.ts`
+
+```typescript
+useRefreshShortcut(onRefresh, enabled?)  // F5 i Ctrl+R
+usePrintShortcut(onPrint, enabled?)      // Ctrl+P
+useEscapeKey(onEscape, enabled?)         // Escape
+useKeyboardShortcut(shortcuts)           // generički hook
+```
+
+Shortcut konfiguracija:
+```typescript
+interface ShortcutConfig {
+  key:      string      // npr. 'F5', 'r', 'p'
+  ctrl?:    boolean
+  alt?:     boolean
+  shift?:   boolean
+  handler:  () => void
+  enabled?: boolean
+}
+```
+
+---
+
+## Skeleton Loaderi (Faza 8.1)
+
+**Izvor:** `src/components/ui/SkeletonLoader.tsx`
+
+| Komponenta | Opis |
+|---|---|
+| `<TableSkeleton rows? columns? />` | Tabela sa header-om i redovima |
+| `<CardSkeleton />` | Jedna kartica statistike |
+| `<CardGridSkeleton count? />` | Grid od N kartica (default 4) |
+| `<TextSkeleton lines? />` | Blok teksta |
+| `<FullscreenLoader message? />` | Centrirani spinner sa porukom |
+
+---
+
+## Empty State Komponenta (Faza 8.1)
+
+**Izvor:** `src/components/ui/EmptyState.tsx`
+
+```tsx
+<EmptyState
+  title="Nema rezultata"
+  description="Promenite filtere"
+  variant="search"          // 'default' | 'search' | 'report' | 'error'
+  action={{ label: 'Osveži', onClick: load }}
+/>
 ```

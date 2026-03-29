@@ -7,9 +7,7 @@
  * All functions return typed data or throw on non-2xx responses.
  */
 
-import { getAuthHeader } from '../utils/token'
-
-const BASE = 'http://localhost:3001/api/v1/reports'
+import { authRequest } from './apiClient'
 
 // ─── Interfejsi / Interfaces ──────────────────────────────────────────────────
 
@@ -75,33 +73,6 @@ export interface ReportData {
   comparison:        Comparison
 }
 
-// ─── Helper / Helper ──────────────────────────────────────────────────────────
-
-/**
- * Šalje autorizovan GET zahtev i parsira JSON odgovor.
- * Sends an authorized GET request and parses the JSON response.
- *
- * @param {string} url - URL za zahtev / Request URL
- */
-async function getJson<T>(url: string): Promise<T> {
-  const authHeader = getAuthHeader()
-  if (!authHeader) throw new Error('Nije autentifikovan / Not authenticated')
-
-  const res  = await fetch(url, {
-    headers: { 'Content-Type': 'application/json', Authorization: authHeader },
-  })
-  const json = await res.json() as {
-    success: boolean
-    data?:   T
-    error?:  { code: string; message: string; details?: unknown }
-  }
-
-  if (!res.ok || !json.success) {
-    throw new Error(json.error?.message ?? `HTTP ${res.status}`)
-  }
-  return json.data as T
-}
-
 // ─── API funkcije / API functions ─────────────────────────────────────────────
 
 /**
@@ -111,7 +82,7 @@ async function getJson<T>(url: string): Promise<T> {
  * @param {string} date - Datum YYYY-MM-DD / Date YYYY-MM-DD
  */
 export function getDailyReport(date: string): Promise<ReportData> {
-  return getJson<ReportData>(`${BASE}/daily?date=${encodeURIComponent(date)}`)
+  return authRequest<ReportData>(`/reports/daily?date=${encodeURIComponent(date)}`)
 }
 
 /**
@@ -121,7 +92,7 @@ export function getDailyReport(date: string): Promise<ReportData> {
  * @param {string} weekStart - Datum ponedeljka YYYY-MM-DD / Monday date YYYY-MM-DD
  */
 export function getWeeklyReport(weekStart: string): Promise<ReportData> {
-  return getJson<ReportData>(`${BASE}/weekly?weekStart=${encodeURIComponent(weekStart)}`)
+  return authRequest<ReportData>(`/reports/weekly?weekStart=${encodeURIComponent(weekStart)}`)
 }
 
 /**
@@ -131,7 +102,7 @@ export function getWeeklyReport(weekStart: string): Promise<ReportData> {
  * @param {string} month - Mesec YYYY-MM / Month YYYY-MM
  */
 export function getMonthlyReport(month: string): Promise<ReportData> {
-  return getJson<ReportData>(`${BASE}/monthly?month=${encodeURIComponent(month)}`)
+  return authRequest<ReportData>(`/reports/monthly?month=${encodeURIComponent(month)}`)
 }
 
 /**
@@ -142,5 +113,5 @@ export function getMonthlyReport(month: string): Promise<ReportData> {
  * @param {string} dateTo   - Krajnji datum YYYY-MM-DD / End date YYYY-MM-DD
  */
 export function getCustomReport(dateFrom: string, dateTo: string): Promise<ReportData> {
-  return getJson<ReportData>(`${BASE}/custom?dateFrom=${encodeURIComponent(dateFrom)}&dateTo=${encodeURIComponent(dateTo)}`)
+  return authRequest<ReportData>(`/reports/custom?dateFrom=${encodeURIComponent(dateFrom)}&dateTo=${encodeURIComponent(dateTo)}`)
 }

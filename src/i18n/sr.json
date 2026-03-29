@@ -698,6 +698,60 @@
     }
   },
 
+  "backup": {
+    "title": "Backup baze podataka",
+    "subtitle": "Upravljanje rezervnim kopijama podataka",
+    "create": "Napravi backup sada",
+    "creating": "Kreiranje...",
+    "folder_label": "Backup folder",
+    "folder_hint": "Lokacija gde se čuvaju backup fajlovi",
+    "change_folder": "Promeni folder",
+    "list_title": "Poslednjih 10 backup-ova",
+    "list_empty": "Nema backup-ova",
+    "list_loading": "Učitavanje liste...",
+    "restore": "Vrati iz backup-a",
+    "restore_confirm_title": "Vrati iz backup-a",
+    "restore_confirm_message": "Ovo će ZAMENITI trenutnu bazu podacima iz ovog backup-a! Aplikacija će biti restartovana. Da li ste sigurni?",
+    "restore_confirm_btn": "Vrati bazu",
+    "restoring": "Vraćanje...",
+    "success_create": "Backup uspešno kreiran",
+    "success_restore": "Baza vraćena — aplikacija se restartuje...",
+    "success_folder": "Backup folder promenjen",
+    "error_create": "Greška pri kreiranju backup-a",
+    "error_restore": "Greška pri vraćanju iz backup-a",
+    "error_folder": "Greška pri postavljanju foldera",
+    "error_list": "Greška pri učitavanju liste backup-ova",
+    "size_bytes": "{{size}} B",
+    "size_kb": "{{size}} KB",
+    "size_mb": "{{size}} MB",
+    "auto_backup_note": "Automatski backup se pravi pri svakom zatvaranju aplikacije (čuva se poslednjih 30)."
+  },
+
+  "errorBoundary": {
+    "title": "Došlo je do neočekivane greške",
+    "description": "Aplikacija je naišla na problem koji nije mogla da reši. Osvežite stranicu da biste nastavili sa radom.",
+    "refresh": "Osveži stranicu",
+    "retry": "Pokušaj ponovo",
+    "details": "Detalji greške"
+  },
+
+  "emptyState": {
+    "default_title": "Nema podataka",
+    "default_description": "Nema stavki za prikaz.",
+    "search_title": "Nema rezultata za pretragu",
+    "search_description": "Pokušajte sa drugačijim terminom pretrage.",
+    "report_title": "Nema podataka za izabrani period",
+    "report_description": "Pokušajte sa drugačijim datumskim rasponom.",
+    "loading": "Učitavanje..."
+  },
+
+  "shortcuts": {
+    "hint_refresh": "F5 ili Ctrl+R za osvežavanje podataka",
+    "hint_escape": "Escape za zatvaranje",
+    "hint_enter": "Enter za potvrdu",
+    "hint_print": "Ctrl+P za štampanje"
+  },
+
   "adminDashboard": {
     "title": "Admin Dashboard",
     "todayRevenue": "Današnji promet",

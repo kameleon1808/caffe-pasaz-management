@@ -4,41 +4,15 @@
  *              API client for bill management.
  */
 
-import { getAuthHeader } from '../utils/token'
+import { authRequest, NotFoundError } from './apiClient'
 import type { Bill } from '../types'
-
-const BASE = 'http://localhost:3001/api/v1/bills'
-
-/** Pomoćna funkcija za autorizovane zahteve / Helper for authorized requests */
-async function req<T>(url: string, options: RequestInit = {}): Promise<T> {
-  const authHeader = getAuthHeader()
-  if (!authHeader) throw new Error('Nije autentifikovan / Not authenticated')
-
-  const res = await fetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization:  authHeader,
-      ...(options.headers as Record<string, string> | undefined),
-    },
-  })
-
-  if (!res.ok) {
-    const err  = await res.json() as { error?: string; code?: string }
-    const error = new Error(err.error ?? 'Greška / Error')
-    ;(error as Error & { code?: string }).code = err.code
-    throw error
-  }
-
-  return res.json() as Promise<T>
-}
 
 /**
  * Kreira novi račun za dati sto.
  * Creates a new bill for the given table.
  */
 export async function createBill(tableId: number): Promise<Bill> {
-  return req<Bill>(BASE, { method: 'POST', body: JSON.stringify({ tableId }) })
+  return authRequest<Bill>('/bills', { method: 'POST', body: JSON.stringify({ tableId }) })
 }
 
 /**
@@ -46,7 +20,7 @@ export async function createBill(tableId: number): Promise<Bill> {
  * Returns a single bill by ID.
  */
 export async function fetchBill(id: number): Promise<Bill> {
-  return req<Bill>(`${BASE}/${id}`)
+  return authRequest<Bill>(`/bills/${id}`)
 }
 
 /**
@@ -55,11 +29,11 @@ export async function fetchBill(id: number): Promise<Bill> {
  */
 export async function fetchOpenBillForTable(tableId: number): Promise<Bill | null> {
   try {
-    return await req<Bill>(`${BASE}/table/${tableId}`)
+    return await authRequest<Bill>(`/bills/table/${tableId}`)
   } catch (err) {
-    if ((err as Error & { code?: string }).code === undefined &&
-        (err as Error).message.includes('404')) return null
-    // 404 returns null, other errors propagate
+    if (err instanceof NotFoundError) return null
+    // Sve ostale greške propagiraju
+    // All other errors propagate
     return null
   }
 }
@@ -73,7 +47,7 @@ export async function addBillItem(
   productId: number,
   color: 'WHITE' | 'BLACK' = 'WHITE'
 ): Promise<Bill> {
-  return req<Bill>(`${BASE}/${billId}/items`, {
+  return authRequest<Bill>(`/bills/${billId}/items`, {
     method: 'POST',
     body:   JSON.stringify({ productId, color }),
   })
@@ -88,7 +62,7 @@ export async function updateBillItem(
   itemId:  number,
   data: { quantity?: number; unitPrice?: number; discount?: number; color?: string }
 ): Promise<Bill> {
-  return req<Bill>(`${BASE}/${billId}/items/${itemId}`, {
+  return authRequest<Bill>(`/bills/${billId}/items/${itemId}`, {
     method: 'PUT',
     body:   JSON.stringify(data),
   })
@@ -99,7 +73,7 @@ export async function updateBillItem(
  * Removes an item from the bill.
  */
 export async function removeBillItem(billId: number, itemId: number): Promise<Bill> {
-  return req<Bill>(`${BASE}/${billId}/items/${itemId}`, { method: 'DELETE' })
+  return authRequest<Bill>(`/bills/${billId}/items/${itemId}`, { method: 'DELETE' })
 }
 
 /**
@@ -107,7 +81,7 @@ export async function removeBillItem(billId: number, itemId: number): Promise<Bi
  * Sets the bill-level discount.
  */
 export async function setBillDiscount(billId: number, discountPercent: number): Promise<Bill> {
-  return req<Bill>(`${BASE}/${billId}/discount`, {
+  return authRequest<Bill>(`/bills/${billId}/discount`, {
     method: 'PUT',
     body:   JSON.stringify({ discountPercent }),
   })
@@ -118,7 +92,7 @@ export async function setBillDiscount(billId: number, discountPercent: number): 
  * Transfers the bill to another table.
  */
 export async function transferBill(billId: number, tableId: number): Promise<Bill> {
-  return req<Bill>(`${BASE}/${billId}/transfer`, {
+  return authRequest<Bill>(`/bills/${billId}/transfer`, {
     method: 'PUT',
     body:   JSON.stringify({ tableId }),
   })
@@ -129,7 +103,7 @@ export async function transferBill(billId: number, tableId: number): Promise<Bil
  * Pays the bill.
  */
 export async function payBill(billId: number): Promise<Bill> {
-  return req<Bill>(`${BASE}/${billId}/pay`, { method: 'POST' })
+  return authRequest<Bill>(`/bills/${billId}/pay`, { method: 'POST' })
 }
 
 /**
@@ -137,7 +111,7 @@ export async function payBill(billId: number): Promise<Bill> {
  * Cancels the bill.
  */
 export async function cancelBill(billId: number, reason: string): Promise<Bill> {
-  return req<Bill>(`${BASE}/${billId}/cancel`, {
+  return authRequest<Bill>(`/bills/${billId}/cancel`, {
     method: 'POST',
     body:   JSON.stringify({ reason }),
   })
