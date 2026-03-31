@@ -38,6 +38,7 @@ extraResources:
 # Ikonica: zameniti build/icon.ico sopstvenom ikonom (256x256 .ico fajl)
 # Icon: replace build/icon.ico with your own icon (256x256 .ico file)
 win:
+  icon: build/icon.ico
   target:
     - target: nsis
       arch:
