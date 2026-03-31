@@ -13,9 +13,9 @@
  */
 
 import { app, BrowserWindow, Menu, shell, ipcMain, dialog } from 'electron'
-import { join }                                              from 'path'
+import { join, resolve }                                     from 'path'
+import { existsSync, copyFileSync, mkdirSync }               from 'fs'
 import log                                                   from 'electron-log'
-import { startServer }                                       from '../server/index'
 import {
   createBackup,
   listBackups,
@@ -69,6 +69,66 @@ function setupLogging(): void {
 // Electron Vite postavlja ovu promenljivu u development modu
 // Electron Vite sets this variable in development mode
 const RENDERER_DEV_URL = process.env['ELECTRON_RENDERER_URL']
+
+// ─── Production baza podataka / Production database ───────────────────────────
+
+/**
+ * Konfiguriše putanju do SQLite baze za production mode.
+ * Configures the SQLite database path for production mode.
+ *
+ * U production-u baza se čuva u userData direktorijumu korisnika.
+ * In production the database is stored in the user's userData directory.
+ *
+ * Pri prvom pokretanju kopira bundled seed bazu ako baza još ne postoji.
+ * On first launch copies the bundled seed database if no database exists yet.
+ */
+function setupProductionDatabase(): void {
+  // U development modu ne diramo DATABASE_URL — Prisma koristi .env / prisma/dev.db
+  // In dev mode we leave DATABASE_URL alone — Prisma uses .env / prisma/dev.db
+  if (RENDERER_DEV_URL) return
+
+  const userDataPath = app.getPath('userData')
+  const dbPath       = join(userDataPath, 'kafic.db')
+
+  // Postavi sve env varijable potrebne serveru (u production-u nema .env fajla)
+  // Set all env variables needed by the server (no .env file in production)
+  process.env['DATABASE_URL'] = `file:${dbPath}`
+
+  if (!process.env['JWT_SECRET']) {
+    process.env['JWT_SECRET'] = 'kafic-pasaz-desktop-jwt-secret-key-2025'
+  }
+  if (!process.env['JWT_EXPIRES_IN']) {
+    process.env['JWT_EXPIRES_IN'] = '8h'
+  }
+  if (!process.env['PORT']) {
+    process.env['PORT'] = '3001'
+  }
+
+  // Prvo pokretanje: kopiraj bundled (seed) bazu u userData
+  // First launch: copy the bundled (seed) database to userData
+  if (!existsSync(dbPath)) {
+    try {
+      mkdirSync(userDataPath, { recursive: true })
+
+      // U pakovanoj aplikaciji (asar: false) dev.db je na resources/app/prisma/prisma/dev.db
+      // DATABASE_URL="file:./prisma/dev.db" — Prisma resolve-uje relativno od prisma/ (schema dir)
+      // In a packaged app (asar: false) dev.db is at resources/app/prisma/prisma/dev.db
+      // DATABASE_URL="file:./prisma/dev.db" — Prisma resolves relative to prisma/ (schema dir)
+      const bundledDb = join(app.getAppPath(), 'prisma', 'prisma', 'dev.db')
+
+      if (existsSync(bundledDb)) {
+        copyFileSync(bundledDb, dbPath)
+        log.info(`[DB] Kreirana baza iz bundled seed: ${dbPath}`)
+      } else {
+        log.warn('[DB] Bundled seed baza nije pronađena, Prisma će kreirati praznu bazu.')
+      }
+    } catch (err) {
+      log.error('[DB] Greška pri kopiranju seed baze:', (err as Error).message)
+    }
+  }
+
+  log.info(`[DB] Production DATABASE_URL: ${process.env['DATABASE_URL']}`)
+}
 
 // ─── IPC Handleri / IPC Handlers ─────────────────────────────────────────────
 
@@ -229,9 +289,9 @@ function createWindow(): BrowserWindow {
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show()
-    if (RENDERER_DEV_URL) {
-      mainWindow.webContents.openDevTools()
-    }
+    // DEBUG: uvek otvori DevTools dok se dijagnostikuje blank screen problem
+    // DEBUG: always open DevTools while diagnosing blank screen problem
+    mainWindow.webContents.openDevTools()
   })
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -242,7 +302,9 @@ function createWindow(): BrowserWindow {
   if (RENDERER_DEV_URL) {
     mainWindow.loadURL(RENDERER_DEV_URL)
   } else {
-    mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+    // U production-u renderer serviruje Express — nema file:// crossorigin problema
+    // In production the renderer is served by Express — no file:// crossorigin issues
+    mainWindow.loadURL('http://localhost:3001')
   }
 
   return mainWindow
@@ -256,10 +318,14 @@ function createWindow(): BrowserWindow {
  */
 app.whenReady().then(async () => {
   setupLogging()
+  setupProductionDatabase()  // mora pre startServer() / must be before startServer()
   setupIpcHandlers()
 
   // Pokreni Express API server / Start Express API server
+  // Dynamic import osigurava da je DATABASE_URL postavljen pre nego što PrismaClient bude kreiran
+  // Dynamic import ensures DATABASE_URL is set before PrismaClient is instantiated
   try {
+    const { startServer } = await import('../server/index')
     await startServer()
     log.info('[Electron] API server pokrenut / API server started')
   } catch (error) {

@@ -3,8 +3,8 @@
 # electron-builder configuration for Windows .exe packaging
 # ==============================================================================
 
-appId: com.caffepassaz.management
-productName: "Kafić Pasaz"
+appId: com.kafic.app
+productName: "Kafic App"
 copyright: "Copyright © 2025 Kafić Pasaz"
 
 # Direktorijumi / Directories
@@ -13,28 +13,35 @@ directories:
   buildResources: build
 
 # Fajlovi koji se pakuju / Files to package
+# electron-vite bundluje sve zavisnosti u out/ osim @prisma/client (native module)
+# electron-vite bundles all dependencies into out/ except @prisma/client (native module)
 files:
   - out/**/*
-  - node_modules/.prisma/**/*
   - node_modules/@prisma/client/**/*
   - prisma/schema.prisma
+  - prisma/prisma/dev.db
   - package.json
-  - "!node_modules/**/{CHANGELOG.md,README.md,README,readme.md,readme}"
-  - "!node_modules/**/{test,__tests__,tests,powered-test,example,examples}"
 
-# ASAR pakovanje / ASAR packaging
-asar: true
-asarUnpack:
-  - node_modules/.prisma/**/*
-  - node_modules/@prisma/client/**/*
+# ASAR isključen — Prisma zahteva direktan filesystem pristup .node native modulima
+# ASAR disabled — Prisma requires direct filesystem access to .node native modules
+asar: false
+
+# extraResources: eksplicitno kopira .prisma direktorijum (zaobilazi glob problem sa dot-folderima)
+# extraResources: explicitly copies .prisma directory (bypasses glob issue with dot-folders)
+# node_modules/.prisma/client/ sadrži query engine i generisani klijent
+# node_modules/.prisma/client/ contains the query engine and generated client
+extraResources:
+  - from: "node_modules/.prisma"
+    to: "app/node_modules/.prisma"
 
 # Windows konfiguracija / Windows configuration
+# Ikonica: zameniti build/icon.ico sopstvenom ikonom (256x256 .ico fajl)
+# Icon: replace build/icon.ico with your own icon (256x256 .ico file)
 win:
   target:
     - target: nsis
       arch:
         - x64
-  icon: build/icon.ico
   requestedExecutionLevel: asInvoker
 
 # NSIS installer konfiguracija / NSIS installer configuration
@@ -42,11 +49,7 @@ nsis:
   oneClick: false
   perMachine: false
   allowToChangeInstallationDirectory: true
-  installerLanguages:
-    - sr
-    - en
-  language: "2074"
-  shortcutName: "Kafić Pasaz"
-  uninstallDisplayName: "Kafić Pasaz Management"
+  shortcutName: "Kafic Pasaz"
+  uninstallDisplayName: "Kafic Pasaz Management"
   createDesktopShortcut: true
   createStartMenuShortcut: true

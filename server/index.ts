@@ -15,7 +15,7 @@
 import express, { Application } from 'express'
 import cors from 'cors'
 import { config } from 'dotenv'
-import { resolve } from 'path'
+import { resolve, join } from 'path'
 
 import { requestLogger }    from './middleware/logger'
 import { errorHandler }     from './middleware/errorHandler'
@@ -49,12 +49,10 @@ function createApp(): Application {
 
   // ── Middleware ────────────────────────────────────────────────────────────
 
-  // CORS: dozvoli zahteve sa Vite dev servera / Allow requests from Vite dev server
+  // CORS: dozvoli zahteve sa Vite dev servera i iz production Electron renderer-a (file://)
+  // CORS: allow requests from Vite dev server and production Electron renderer (file://)
   app.use(cors({
-    origin: [
-      'http://localhost:5173', // Vite dev server
-      'http://localhost:3000'  // alternativni port / alternative port
-    ],
+    origin: true, // prihvata sve origine uključujući null/file:// / accepts all origins including null/file://
     credentials: true,
     methods:  ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
@@ -117,6 +115,16 @@ function createApp(): Application {
 
   // Admin dashboard statistike / Admin dashboard statistics
   app.use('/api/v1/dashboard', dashboardRouter)
+
+  // ── Renderer static files u production modu / Renderer static files in production ──
+  // U dev modu Vite dev server serviruje renderer, ovde ga ne diramo.
+  // In dev mode the Vite dev server serves the renderer, we skip this.
+  if (!process.env['ELECTRON_RENDERER_URL']) {
+    const rendererPath = join(__dirname, '../renderer')
+    app.use(express.static(rendererPath))
+    // Fallback na index.html za React Router rute / Fallback to index.html for React Router routes
+    app.get('*', (_req, res) => res.sendFile(join(rendererPath, 'index.html')))
+  }
 
   // ── Error Handler (mora biti poslednji!) ──────────────────────────────────
   // Error Handler (must be last!)
